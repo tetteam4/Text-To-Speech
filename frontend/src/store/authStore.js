@@ -74,6 +74,7 @@ export const useAuthStore = create((set) => ({
       throw error;
     }
   },
+  
   verifyEmail: async (code) => {
     set({ isLoading: true, error: null });
     try {

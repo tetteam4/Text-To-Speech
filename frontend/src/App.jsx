@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import FloatingShape from "./components/FloatingShape";
+import FloatingShape from "./components/auth/FloatingShape";
 
 import SignUpPage from "./pages/SignUpPage";
 import LoginPage from "./pages/LoginPage";
@@ -8,12 +8,11 @@ import DashboardPage from "./pages/DashboardPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 
-import LoadingSpinner from "./components/LoadingSpinner";
+import LoadingSpinner from "./components/auth/LoadingSpinner";
 
 import { Toaster } from "react-hot-toast";
 import { useAuthStore } from "./store/authStore";
 import { useEffect } from "react";
-import Test from "./pages/Test";
 
 // protect routes that require authentication
 const ProtectedRoute = ({ children }) => {
@@ -91,14 +90,7 @@ function App() {
             </RedirectAuthenticatedUser>
           }
         />
-        <Route
-          path="test"
-          element={
-            <RedirectAuthenticatedUser>
-              <Test />
-            </RedirectAuthenticatedUser>
-          }
-        />
+
         <Route
           path="/login"
           element={
@@ -106,6 +98,7 @@ function App() {
               <LoginPage />
             </RedirectAuthenticatedUser>
           }
+          
         />
         <Route path="/verify-email" element={<EmailVerificationPage />} />
         <Route
