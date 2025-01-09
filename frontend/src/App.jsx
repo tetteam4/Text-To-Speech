@@ -1,128 +1,76 @@
-import { Navigate, Route, Routes } from "react-router-dom";
-import FloatingShape from "./components/auth/FloatingShape";
-
-import SignUpPage from "./pages/SignUpPage";
-import LoginPage from "./pages/LoginPage";
-import EmailVerificationPage from "./pages/EmailVerificationPage";
-import DashboardPage from "./pages/DashboardPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
-
-import LoadingSpinner from "./components/auth/LoadingSpinner";
-
-import { Toaster } from "react-hot-toast";
-import { useAuthStore } from "./store/authStore";
-import { useEffect } from "react";
-
-// protect routes that require authentication
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, user } = useAuthStore();
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (!user.isVerified) {
-    return <Navigate to="/verify-email" replace />;
-  }
-
-  return children;
-};
-
-// redirect authenticated users to the home page
-const RedirectAuthenticatedUser = ({ children }) => {
-  const { isAuthenticated, user } = useAuthStore();
-
-  if (isAuthenticated && user.isVerified) {
-    return <Navigate to="/" replace />;
-  }
-
-  return children;
-};
+// client/src/App.jsx
+import React, { useEffect, useRef } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  // useNavigate,
+} from "react-router-dom";
+import Home from "./pages/Home";
+// import TextToSpeech from "./pages/TextToSpeech";
+// import FileToSpeech from "./pages/FileToSpeech";
+// import History from "./pages/History";
+// import Profile from "./pages/Profile";
+import MainLayout from "./components/layout/MainLayout";
+import Layout from "./components/layout/Layout";
+import "./styles/index.css";
+import Login from "./components/auth/Login";
+import Signup from "./components/auth/Signup";
+import useStore from "./store/store";
+import PrivateRoute from "./components/route/PrivateRoute";
+import AdminRoute from "./components/route/AdminRoute";
+import ProjectDashboard from "./pages/ProjectDashboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import UserDashboard from "./pages/UserDashboard";
 
 function App() {
-  const { isCheckingAuth, checkAuth } = useAuthStore();
+  const { isAuthenticated, user, fetchVoices, hydrateStore } = useStore();
+  // const navigate = useNavigate();
+  const isMounted = useRef(false);
 
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+ 
+    useEffect(() => {
+      hydrateStore();
+    }, [hydrateStore]);
 
-  if (isCheckingAuth) return <LoadingSpinner />;
+
+
+     useEffect(() => {
+       if (isMounted.current) {
+         if (isAuthenticated && user && !user.role) {
+          //  navigate("/");
+         }
+       } else {
+         isMounted.current = true;
+       }
+     }, [isAuthenticated, user]);
+  
+    // useEffect(() => {
+    //   fetchVoices();
+    // }, [fetchVoices]);
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">
-      <FloatingShape
-        color="bg-white"
-        size="w-64 h-64"
-        top="-5%"
-        left="10%"
-        delay={0}
-      />
-      <FloatingShape
-        color="bg-white"
-        size="w-48 h-48"
-        top="70%"
-        left="80%"
-        delay={5}
-      />
-      <FloatingShape
-        color="bg-white"
-        size="w-32 h-32"
-        top="40%"
-        left="-10%"
-        delay={2}
-      />
-
+    <Router>
       <Routes>
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/signup"
-          element={
-            <RedirectAuthenticatedUser>
-              <SignUpPage />
-            </RedirectAuthenticatedUser>
-          }
-        />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/"       element={ <MainLayout>  <Home /> </MainLayout> }/>
+        <Route element={<PrivateRoute />}>
+          <Route
+            path="/dashboard"
+            element={
+              <Layout>
+                <UserDashboard />
+              </Layout>
+            }
+          />
+        </Route>
 
-        <Route
-          path="/login"
-          element={
-            <RedirectAuthenticatedUser>
-              <LoginPage />
-            </RedirectAuthenticatedUser>
-          }
-          
-        />
-        <Route path="/verify-email" element={<EmailVerificationPage />} />
-        <Route
-          path="/forgot-password"
-          element={
-            <RedirectAuthenticatedUser>
-              <ForgotPasswordPage />
-            </RedirectAuthenticatedUser>
-          }
-        />
-
-        <Route
-          path="/reset-password/:token"
-          element={
-            <RedirectAuthenticatedUser>
-              <ResetPasswordPage />
-            </RedirectAuthenticatedUser>
-          }
-        />
-        {/* catch all routes */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route element={<AdminRoute />}>
+          <Route path="/admin-dash" element={<AdminDashboard />} />
+        </Route>
       </Routes>
-      <Toaster />
-    </div>
+    </Router>
   );
 }
 
