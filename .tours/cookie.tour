@@ -1,0 +1,11 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "cookie",
+  "steps": [
+    {
+      "file": "api/controlers/post.controler.js",
+      "description": "in here we sent the req cookie if \r\n",
+      "line": 6
+    }
+  ]
+}

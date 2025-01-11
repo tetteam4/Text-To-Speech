@@ -1,0 +1,27 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "token",
+  "steps": [
+    {
+      "file": "api/controlers/auth.controller.js",
+      "description": "const { password: pass,...rest } = validUser._doc; - این خط شیء validUser را  و خاصیت رمز عبور را از آن حذف می کند. دستور ...rest برای جمع آوری خواص باقی مانده در یک شی جدید استفاده می شود.",
+      "line": 54
+    },
+    {
+      "file": "api/controlers/auth.controller.js",
+      "description": "res.status(200).cookie(\"access_token\", token, { httpOnly: true }); - این خط کوکی access_token را در پاسخ HTTP با JWT تولید شده به عنوان مقدار آن تنظیم می کند. گزینه httpOnly روی true تنظیم شده است تا از دسترسی جاوا اسکریپت به کوکی در سمت کلاینت جلوگیری کند، که می تواند به کاهش حملات اسکریپت بین سایتی (XSS) کمک کند.",
+      "line": 58
+    },
+    {
+      "file": "api/controlers/auth.controller.js",
+      "description": "The line const { password: pass, ...rest } = validUser._doc; is a part of JavaScript destructuring assignment. This particular line is used to extract the password property from the validUser._doc object and rename it to pass, while also capturing the rest of the properties in a new object named rest.",
+      "line": 54
+    },
+    {
+      "file": "client/src/redux/user/userSlice.js",
+      "description": "reducers: An object containing functions that handle actions and update the state. In this case, there are three reducers defined:",
+      "line": 12
+    }
+  ],
+  "ref": "5dd22b343819638f0c03a7384844ee2f7284ace1"
+}

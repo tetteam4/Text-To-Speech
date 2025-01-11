@@ -1,0 +1,21 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "Ooulet in react dom",
+  "steps": [
+    {
+      "file": "client/src/components/PrivateRoute.jsx",
+      "description": "The Outlet component is a special component that tells React Router DOM to render the next matching route in the route hierarchy. In this case, when the URL is /dashboard/messages, the Outlet will render the Messages component. When the URL is /dashboard/tasks, the Outlet will render the Tasks component.",
+      "line": 4
+    },
+    {
+      "file": "client/src/pages/Dashboard.jsx",
+      "description": "Note that useParams and URLSearchParams serve different purposes. useParams is used to access route parameters, while URLSearchParams is used to access query",
+      "line": 10
+    },
+    {
+      "file": "client/src/pages/Dashboard.jsx",
+      "description": "when we search the location is changed this side effect also render ",
+      "line": 14
+    }
+  ]
+}

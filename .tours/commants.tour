@@ -1,0 +1,11 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "commants",
+  "steps": [
+    {
+      "file": "api/index.js",
+      "description": "its for access to env on everywhere",
+      "line": 5
+    }
+  ]
+}
