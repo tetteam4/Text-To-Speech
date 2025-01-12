@@ -6,10 +6,6 @@ import authRoutes from "./routes/auth.route.js";
 import cookieParser from "cookie-parser";
 import path from "path";
 
-// import  CommentRoute  from "./controlers/comment.controller.js";
-// import multer from "multer";
-// import path from "path"; // Import path module
-
 dotenv.config();
 
 mongoose

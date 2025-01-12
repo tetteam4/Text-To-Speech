@@ -190,13 +190,13 @@ export const signup = async (req, res, next) => {
 export const singin = async (req, res, next) => {
   const { email, password } = req.body;
   if (!email || !password || email === "" || password === "") {
-    next(errorHandler(400, "همه فیلدها الزامی است"));
+    next(errorHandler(400, "All fields are required"));
   }
   // check email and password
   try {
     const validUser = await User.findOne({ email });
     if (!validUser) {
-      return next(errorHandler(404, "کاربر پیدا نشد"));
+      return next(errorHandler(404, "User Not Found"));
     }
     // Check if the user is verified
     if (!validUser.isVerified) {
@@ -207,7 +207,7 @@ export const singin = async (req, res, next) => {
     //plainText , hashed password
     const validPassword = bcrypt.compareSync(password, validUser.password);
     if (!validPassword) {
-      return next(errorHandler(404, "رمز عبور درست نیست"));
+      return next(errorHandler(404, "Passwords do not match"));
     }
 
     // ues token for auth users
