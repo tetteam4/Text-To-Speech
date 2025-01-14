@@ -48,13 +48,7 @@ export default function Header() {
                   to="/"
                   className="py-2 px-4 text-gray-700 dark:text-white hover:text-fave dark:hover:text-primary"
               >
-                Homee
-              </Link>
-              <Link
-                  to="/"
-                  className="py-2 px-4 text-gray-700 dark:text-white hover:text-fave dark:hover:text-primary"
-              >
-                back
+                Home
               </Link>
               <Link
                   to="/dashboard?tab=file-to-speech"
