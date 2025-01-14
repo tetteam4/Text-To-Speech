@@ -300,6 +300,7 @@ function DashSidebar({ toggleSidebar, isSidebarOpen }) {
             </Link>
           </>
         )}
+        
         {/* SignOut Item */}
         <div onClick={handleSignout} className="relative cursor-pointer">
           <div

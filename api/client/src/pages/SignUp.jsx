@@ -2,9 +2,14 @@ import { Alert, Button, Label, Spinner, TextInput } from "flowbite-react";
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import OAuth from "../components/OAuth";
+import PasswordStrengthMeter from "./PasswordStrengthMeter";
 
 export default function SignUp() {
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password:""
+  });
   const [errorMessage, setErrorMessage] = useState(null);
   const [loading, setLoding] = useState(false);
   const navigate = useNavigate();
@@ -102,7 +107,8 @@ export default function SignUp() {
                     placeholder="**********"
                     onChange={handleChange}
                 />
-              </div>
+            </div>
+            <PasswordStrengthMeter password={formData.password}/>
               <Button
                   gradientDuoTone="purpleToPink"
                   type="submit"
