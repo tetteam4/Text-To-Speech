@@ -51,7 +51,7 @@ function Dropdown({ options, selected, onSelect, label, style }) {
             {options &&
               options.map((option) => (
                 <button
-                  key={option.id}
+                  key={option.name} // Using option.name as key
                   onClick={() => handleSelect(option)}
                   className="block w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100"
                 >
