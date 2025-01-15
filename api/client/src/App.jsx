@@ -12,21 +12,19 @@ import OnlyAdminPrivateRoute from "./components/OnlyAdmin";
 
 import UserProfile from "./pages/Profile";
 import ScrollTop from "./components/ScrollTop";
+import NotFoundPage from "./pages/NotFoundPage";
 // import Search from "./pages/Search";
 
 export default function App() {
   return (
-    
     <div>
       <BrowserRouter>
         <ScrollTop />
         <Header />
         <Routes>
           <Route path="/" element={<Home />} />
-          {/* <Route path="/about" element={<About/>} /> */}
           <Route path="/sign-in" element={<Signin />} />
           <Route path="/sign-up" element={<Signup />} />
-          {/* <Route path="/search" element={<Search/>} /> */}
           <Route path="/userprofile" element={<UserProfile />} />
           <Route element={<PrivateRoute />}>
             <Route path="/dashboard" element={<Dashboard />} />
@@ -35,7 +33,7 @@ export default function App() {
             {/* <Route path="/create-post" element={<CreatePost />} /> */}
             {/* <Route path="/update-post/:postId" element={<UpdatePost />} /> */}
           </Route>
-          {/* <Route path="/posts" element={<Posts />} /> */}
+          <Route path="*" element={<NotFoundPage />} />
           {/* <Route path="/post/:postSlug" element={<PostPage />} /> */}
         </Routes>
         <Footer />

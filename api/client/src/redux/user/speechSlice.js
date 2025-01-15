@@ -1,4 +1,4 @@
-// client/src/store/speechSlice.js
+// client/src/redux/user/speechSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
@@ -17,15 +17,13 @@ export const fetchVoices = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/speech/google-voices`,
+        `${import.meta.env.VITE_API_URL}/api/speech/playht-voices`,
         {
           withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
         }
       );
       return response.data;
+      log("fetchVoices response", response.data);
     } catch (error) {
       return rejectWithValue(error.message || "Error fetching voices");
     }
@@ -34,21 +32,19 @@ export const fetchVoices = createAsyncThunk(
 
 export const generateSpeech = createAsyncThunk(
   "speech/generateSpeech",
-  async ({ text, currentVoice }, { rejectWithValue }) => {
+  async ({ text, voiceSettings }, { rejectWithValue }) => {
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/speech/generate-google`,
+        `${import.meta.env.VITE_API_URL}/api/speech/generate-playht`,
         {
           text,
-          voiceSettings: currentVoice,
+          voiceSettings,
         },
         {
           withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
         }
       );
+
       return response.data.audioFileUrl;
     } catch (error) {
       return rejectWithValue(error.message || "Error generating speech");
@@ -74,6 +70,7 @@ const SpeechSlice = createSlice({
     },
     setCurrentLanguage: (state, action) => {
       state.currentLanguage = action.payload;
+      localStorage.setItem("currentLanguage", action.payload);
     },
     setText: (state, action) => {
       state.text = action.payload;
@@ -88,10 +85,26 @@ const SpeechSlice = createSlice({
       .addCase(fetchVoices.fulfilled, (state, action) => {
         state.loading = false;
         state.voices = action.payload;
-        state.currentLanguage = action.payload[0]
-          ? action.payload[0].languageCode
-          : null;
-        state.currentVoice = action.payload[0] ? action.payload[0] : null;
+        const storedLanguage = localStorage.getItem("currentLanguage");
+        const storedVoice = action.payload.find(
+          (voice) => voice.languageCode === storedLanguage
+        );
+        state.currentLanguage =
+          storedLanguage ||
+          (action.payload && action.payload[0]
+            ? action.payload[0].languageCode
+            : null);
+        state.currentVoice =
+          storedVoice ||
+          (action.payload && action.payload[0] ? action.payload[0] : null);
+        console.log(
+          "fetchVoices.fulfilled payload",
+          action.payload,
+          "currentVoice",
+          state.currentVoice,
+          "storedLanguage",
+          storedLanguage
+        );
       })
       .addCase(fetchVoices.rejected, (state, action) => {
         state.loading = false;

@@ -8,6 +8,7 @@ import TextToSpeech from "./TextToSpeech";
 import FileToSpeech from "./FileToSpeech";
 import ProjectDashboard from "./ProjectDashboard";
 import DashboardComp from "../components/DashboardComp";
+import NotFoundPage from "./NotFoundPage";
 
 export default function Dashboard() {
     const location = useLocation();
@@ -41,20 +42,14 @@ export default function Dashboard() {
             </div>
             {/* Main Content */}
             <div onClick={() => setIsSidebarOpen(false)} className="flex-grow p-4 md:p-6 lg:p-8 w-full pt-16   ">
-                {/* Profile */}
-                {tab === "profile" && <DashProfile />}
-                {/* Post  */}
-                {tab === "history" && <History />}
-                {/* users */}
-                {tab === "users" && <DashUsers />}
-                {/* member */}
+                {tab === "profile"        && <DashProfile />}
+                {tab === "history"        && <History />}
+                {tab === "users"          && <DashUsers />}
                 {tab === "text-to-speech" && <TextToSpeech />}
-                {tab === "dash" && <DashboardComp />}
-                {/* table */}
-                {/* commensts dash */}
+                {tab === "dash"           && <DashboardComp />}
                 {tab === "file-to-speech" && <FileToSpeech />}
-                {/* dashboard commponent */}
-                {tab === "projects" && <ProjectDashboard />}
+                {tab === "projects"       && <ProjectDashboard />}
+
             </div>
         </div>
     );

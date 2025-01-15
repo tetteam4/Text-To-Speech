@@ -221,7 +221,7 @@ function DashSidebar({ toggleSidebar, isSidebarOpen }) {
         >
           <div
             className={`
-                            flex items-center  rounded-md p-2
+              flex items-center  rounded-md p-2
                               hover:bg-gray-200 dark:hover:bg-gray-700
                               ${
                                 tab === "history"
@@ -300,7 +300,7 @@ function DashSidebar({ toggleSidebar, isSidebarOpen }) {
             </Link>
           </>
         )}
-        
+
         {/* SignOut Item */}
         <div onClick={handleSignout} className="relative cursor-pointer">
           <div
