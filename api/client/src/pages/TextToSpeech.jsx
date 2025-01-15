@@ -21,22 +21,8 @@ function TextToSpeech() {
     useSelector((state) => state.speech);
 
   useEffect(() => {
-    console.log("useEffect (fetchVoices) voices:", voices);
-    console.log("useEffect (fetchVoices) currentVoice:", currentVoice);
     dispatch(fetchVoices());
   }, [dispatch]);
-
-  useEffect(() => {
-    if (voices && voices.length > 0 && !currentVoice) {
-      console.log(
-        "useEffect (voices) setting current voice from effect:",
-        voices[0]
-      );
-      dispatch(setCurrentVoice(voices[0]));
-    } else {
-      console.log("useEffect (voices): voices is empty or undefined");
-    }
-  }, [voices, dispatch, setCurrentVoice, currentVoice]);
 
   const handleTextChange = (newText) => {
     dispatch(setText(newText));
@@ -46,13 +32,16 @@ function TextToSpeech() {
   const handleLanguageSelect = useCallback(
     (language) => {
       dispatch(setCurrentLanguage(language));
+      if (voices) {
+        const voice = voices.find((v) => v.language === language.name);
+        if (voice) dispatch(setCurrentVoice(voice));
+      }
     },
-    [dispatch, setCurrentLanguage]
+    [dispatch, voices, setCurrentLanguage, setCurrentVoice]
   );
 
   const handleVoiceSelect = useCallback(
     (voice) => {
-      console.log("handleVoiceSelect voice: ", voice);
       dispatch(setCurrentVoice(voice));
     },
     [dispatch, setCurrentVoice]
@@ -63,7 +52,6 @@ function TextToSpeech() {
   const [pitch, setPitch] = useState(0);
 
   const handleGenerateSpeech = async () => {
-    console.log("currentVoice before generateSpeech:", currentVoice);
     try {
       if (currentVoice && currentVoice.id) {
         dispatch(generateSpeech({ text, voiceSettings: currentVoice }));
@@ -124,13 +112,14 @@ function TextToSpeech() {
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Select Language
             </label>
+
             {voices && (
               <Dropdown
                 options={voices.map((voice) => ({
-                  id: voice.languageCode,
-                  name: voice.languageCode,
+                  id: voice.language,
+                  name: voice.language,
                 }))}
-                selected={currentLanguage?.name || null}
+                selected={currentLanguage}
                 onSelect={handleLanguageSelect}
               />
             )}
@@ -141,8 +130,10 @@ function TextToSpeech() {
             </label>
             {voices && (
               <Dropdown
-                options={voices}
-                selected={currentVoice?.name || null}
+                options={voices.filter(
+                  (voice) => voice.language === currentLanguage?.name
+                )}
+                selected={currentVoice}
                 onSelect={handleVoiceSelect}
               />
             )}
@@ -170,7 +161,6 @@ function TextToSpeech() {
             onClick={handleGenerateSpeech}
             className="w-full dark:text-white dark:bg-fave dark:hover:bg-[#6c20f3] text-white hover:bg-[#08a8db]"
             size="large"
-            variant="primary"
           >
             Generate Speech
           </Button>

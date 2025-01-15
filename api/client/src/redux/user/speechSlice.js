@@ -13,7 +13,7 @@ const initialState = {
 };
 
 export const fetchVoices = createAsyncThunk(
-  "speech/fetchVoices",
+  "speech",
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get(
@@ -23,7 +23,6 @@ export const fetchVoices = createAsyncThunk(
         }
       );
       return response.data;
-      log("fetchVoices response", response.data);
     } catch (error) {
       return rejectWithValue(error.message || "Error fetching voices");
     }
@@ -87,12 +86,15 @@ const SpeechSlice = createSlice({
         state.voices = action.payload;
         const storedLanguage = localStorage.getItem("currentLanguage");
         const storedVoice = action.payload.find(
-          (voice) => voice.languageCode === storedLanguage
+          (voice) => voice.language === storedLanguage
         );
         state.currentLanguage =
           storedLanguage ||
           (action.payload && action.payload[0]
-            ? action.payload[0].languageCode
+            ? {
+                name: action.payload[0].language,
+                id: action.payload[0].language,
+              }
             : null);
         state.currentVoice =
           storedVoice ||
