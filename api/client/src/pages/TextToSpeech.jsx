@@ -1,4 +1,3 @@
-// client/src/pages/TextToSpeech.jsx
 import React, { useEffect, useState, useCallback } from "react";
 import InputText from "../components/ui/InputText";
 import Dropdown from "../components/ui/Dropdown";
@@ -9,7 +8,6 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   fetchVoices,
   setCurrentLanguage,
-  setCurrentVoice,
   generateSpeech,
   setText,
 } from "../redux/user/speechSlice.js";
@@ -18,11 +16,20 @@ function TextToSpeech() {
   const [text, setTextState] = useState("");
   const dispatch = useDispatch();
   const { voices, currentLanguage, currentVoice, loading, error, audioUrl } =
-    useSelector((state) => state.speech);
+    useSelector((state) => {
+      console.log("Redux state:", state.speech);
+      return state.speech;
+    });
 
   useEffect(() => {
     dispatch(fetchVoices());
   }, [dispatch]);
+
+  useEffect(() => {
+    console.log("TextToSpeech - voices:", voices);
+    console.log("TextToSpeech - currentVoice:", currentVoice);
+    console.log("TextToSpeech - currentLanguage:", currentLanguage);
+  }, [voices, currentVoice, currentLanguage]);
 
   const handleTextChange = (newText) => {
     dispatch(setText(newText));
@@ -31,20 +38,14 @@ function TextToSpeech() {
 
   const handleLanguageSelect = useCallback(
     (language) => {
+      console.log("Selected language:", language);
       dispatch(setCurrentLanguage(language));
       if (voices) {
-        const voice = voices.find((v) => v.language === language.name);
-        if (voice) dispatch(setCurrentVoice(voice));
+        const voice = voices.find((v) => v.languageCode === language.id);
+        console.log("found voice for language", voice);
       }
     },
-    [dispatch, voices, setCurrentLanguage, setCurrentVoice]
-  );
-
-  const handleVoiceSelect = useCallback(
-    (voice) => {
-      dispatch(setCurrentVoice(voice));
-    },
-    [dispatch, setCurrentVoice]
+    [dispatch, voices, setCurrentLanguage]
   );
 
   const [rate, setRate] = useState(0);
@@ -113,31 +114,20 @@ function TextToSpeech() {
               Select Language
             </label>
 
-            {voices && (
+            {voices && voices.length > 0 ? (
               <Dropdown
                 options={voices.map((voice) => ({
-                  id: voice.language,
+                  id: voice.languageCode,
                   name: voice.language,
                 }))}
                 selected={currentLanguage}
                 onSelect={handleLanguageSelect}
               />
+            ) : (
+              <p className="dark:text-gray-300">No voices available.</p>
             )}
           </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Select Voice
-            </label>
-            {voices && (
-              <Dropdown
-                options={voices.filter(
-                  (voice) => voice.language === currentLanguage?.name
-                )}
-                selected={currentVoice}
-                onSelect={handleVoiceSelect}
-              />
-            )}
-          </div>
+          <div className="mb-4"></div>
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -161,6 +151,7 @@ function TextToSpeech() {
             onClick={handleGenerateSpeech}
             className="w-full dark:text-white dark:bg-fave dark:hover:bg-[#6c20f3] text-white hover:bg-[#08a8db]"
             size="large"
+            variant="primary"
           >
             Generate Speech
           </Button>
