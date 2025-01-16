@@ -1,9 +1,10 @@
-// client/src/pages/Home.jsx
 import { useState } from "react";
 import Button from "../components/ui/Button";
 import InputText from "../components/ui/InputText";
 import Dropdown from "../components/ui/Dropdown";
 import FeaturesSection from "../components/FeaturesSection";
+import { motion } from "framer-motion";
+
 function Home() {
   const [text, setText] = useState("");
   const handleTextChange = (newText) => {
@@ -34,23 +35,71 @@ function Home() {
   const handleGenerateSpeech = () => {
     // implement generate speech logic
   };
+
+  const pageVariants = {
+    initial: {
+      opacity: 0,
+      y: 20,
+    },
+    animate: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut",
+      },
+    },
+  };
+  const textVariants = {
+    initial: { opacity: 0, y: -20 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.8, ease: "easeOut" },
+  };
+
+  const buttonVariants = {
+    initial: { opacity: 0, scale: 0.8 },
+    animate: { opacity: 1, scale: 1 },
+    transition: { duration: 0.5, ease: "easeOut" },
+  };
+  const fadeIn = {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    transition: { duration: 0.5 },
+  };
   return (
-    <div className="p-6 mt-20">
+    <motion.div
+      className="p-6 mt-20"
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+    >
       {/*  action */}
-      <div className="max-w-3xl mx-auto text-center mb-10">
-        <h1 className="text-4xl font-extrabold text-gray-800 dark:text-white mb-4">
+      <motion.div
+        className="max-w-3xl mx-auto text-center mb-10"
+        variants={fadeIn}
+      >
+        <motion.h1
+          className="text-4xl font-extrabold text-gray-800 dark:text-white mb-4"
+          variants={textVariants}
+        >
           Free{" "}
           <span className="text-primary dark:text-fave">text to speech</span>{" "}
           over 200 voices and 70 languages
-        </h1>
-        <p className="text-gray-600 dark:text-gray-300 mb-6">
+        </motion.h1>
+        <motion.p
+          className="text-gray-600 dark:text-gray-300 mb-6"
+          variants={textVariants}
+        >
           TET TTS App is a free online text-to-speech (TTS) tool that turns your
           text into natural-sounding speech. We offer a wide range of AI Voices.
           Simply input your text, choose a voice, and either download the
           resulting mp3 file or listen to it directly. Perfect for content
           creators, students, or anyone needing text read aloud.
-        </p>
-        <div className="flex items-center justify-center gap-4">
+        </motion.p>
+        <motion.div
+          className="flex items-center justify-center gap-4"
+          variants={buttonVariants}
+        >
           <Button
             variant="primary"
             className="dark:text-white dark:bg-fave dark:hover:bg-[#6c20f3] text-white hover:bg-[#08a8db]"
@@ -61,9 +110,12 @@ function Home() {
           <Button variant="secondary" size="large">
             Learn More
           </Button>
-        </div>
-      </div>
-      <div className="max-w-4xl mx-auto border rounded p-4 bg-white">
+        </motion.div>
+      </motion.div>
+      <motion.div
+        className="max-w-4xl mx-auto border rounded p-4 bg-white"
+        variants={fadeIn}
+      >
         <div className="flex items-center gap-2 mb-4">
           <Button variant="white" size="small">
             Text to Speech
@@ -99,9 +151,9 @@ function Home() {
             Generate
           </Button>
         </div>
-      </div>
+      </motion.div>
       <FeaturesSection />
-    </div>
+    </motion.div>
   );
 }
 

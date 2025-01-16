@@ -42,7 +42,7 @@ app.listen(3000, () => {
 
 app.use("/api/user", userRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/speech", speechRoutes);
+// app.use("/api/speech", speechRoutes);
 
 // ////dir
 // app.use(express.static(path.join(__dirname, '/client/')));

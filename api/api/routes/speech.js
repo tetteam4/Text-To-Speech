@@ -1,12 +1,12 @@
-import express from "express";
-import {
-  getSpeechifyVoices,
-  generateSpeechifySpeech,
-} from "../controlers/speechController.js";
+// import express from "express";
+// import {
+//   getSpeechifyVoices,
+//   generateSpeechifySpeech,
+// } from "../controlers/speechController.js";
 
-const router = express.Router();
+// const router = express.Router();
 
-router.get("/speechify-voices", getSpeechifyVoices);
-router.post("/generate-speechify", generateSpeechifySpeech);
+// router.get("/speechify-voices", getSpeechifyVoices);
+// router.post("/generate-speechify", generateSpeechifySpeech);
 
-export default router;
+// export default router;
