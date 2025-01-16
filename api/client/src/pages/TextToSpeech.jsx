@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import InputText from "../components/ui/InputText";
 import Dropdown from "../components/ui/Dropdown";
+import Slider from "../components/ui/Slider";
 import Button from "../components/ui/Button";
 import AudioPlayer from "../components/ui/AudioPlayer";
 import { useDispatch, useSelector } from "react-redux";
@@ -14,6 +15,10 @@ import {
 
 function TextToSpeech() {
   const [text, setTextState] = useState("");
+  const [rate, setRate] = useState(1);
+  const [pitch, setPitch] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [format, setFormat] = useState("mp3");
   const dispatch = useDispatch();
   const { voices, currentLanguage, loading, error, audioUrl } = useSelector(
     (state) => {
@@ -56,6 +61,10 @@ function TextToSpeech() {
             text,
             lang: currentLanguage.languageCode,
             option: currentLanguage.option,
+            rate,
+            pitch,
+            volume,
+            format,
           })
         );
       } else {
@@ -129,7 +138,55 @@ function TextToSpeech() {
               <p className="dark:text-gray-300">No voices available.</p>
             )}
           </div>
-          <div className="mb-4"></div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Rate
+            </label>
+            <Slider
+              value={rate}
+              onChange={setRate}
+              min={0.5}
+              max={2}
+              step={0.1}
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Volume
+            </label>
+            <Slider
+              value={volume}
+              onChange={setVolume}
+              min={0}
+              max={1}
+              step={0.1}
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Pitch
+            </label>
+            <Slider
+              value={pitch}
+              onChange={setPitch}
+              min={-10}
+              max={10}
+              step={1}
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Audio Format
+            </label>
+            <Dropdown
+              options={[
+                { name: "mp3", id: "mp3" },
+                { name: "wav", id: "wav" },
+              ]}
+              selected={format}
+              onSelect={setFormat}
+            />
+          </div>
           <Button
             onClick={handleGenerateSpeech}
             className="w-full dark:text-white dark:bg-fave dark:hover:bg-[#6c20f3] text-white hover:bg-[#08a8db]"
