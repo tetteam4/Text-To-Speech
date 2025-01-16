@@ -1,62 +1,43 @@
-// client/src/components/ui/AudioPlayer.jsx
 import React, { useState, useRef, useEffect } from "react";
 import {
   PlayIcon,
   PauseIcon,
   SpeakerWaveIcon,
   SpeakerXMarkIcon,
-} from "@heroicons/react/24/solid"; // Using heroicons
+} from "@heroicons/react/24/solid";
+import Slider from "./Slider";
 
 function AudioPlayer({ audioUrl }) {
+  const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolume] = useState(1); // Initial volume is 1 (full volume)
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1); // Initial volume is 1 (full)
-  const audioRef = useRef(null);
-  const sliderRef = useRef(null);
+  const [isMuted, setIsMuted] = useState(false);
 
   useEffect(() => {
     if (audioRef.current) {
-      audioRef.current.addEventListener("loadedmetadata", handleLoadedMetadata);
-      audioRef.current.addEventListener("timeupdate", handleTimeUpdate);
-      audioRef.current.addEventListener("ended", handleEnded);
-      audioRef.current.addEventListener("volumechange", handleVolumeChange);
+      audioRef.current.addEventListener("loadedmetadata", () => {
+        setDuration(audioRef.current.duration);
+      });
+      audioRef.current.addEventListener("timeupdate", () => {
+        setCurrentTime(audioRef.current.currentTime);
+      });
     }
 
     return () => {
       if (audioRef.current) {
-        audioRef.current.removeEventListener(
-          "loadedmetadata",
-          handleLoadedMetadata
-        );
-        audioRef.current.removeEventListener("timeupdate", handleTimeUpdate);
-        audioRef.current.removeEventListener("ended", handleEnded);
-        audioRef.current.removeEventListener(
-          "volumechange",
-          handleVolumeChange
-        );
+        audioRef.current.removeEventListener("loadedmetadata", () => {
+          setDuration(audioRef.current.duration);
+        });
+        audioRef.current.removeEventListener("timeupdate", () => {
+          setCurrentTime(audioRef.current.currentTime);
+        });
       }
     };
-  }, [audioUrl]);
+  }, [audioRef]);
 
-  const handleLoadedMetadata = () => {
-    if (audioRef.current) {
-      setDuration(audioRef.current.duration);
-    }
-  };
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-    }
-  };
-
-  const handleVolumeChange = () => {
-    if (audioRef.current) {
-      setVolume(audioRef.current.volume);
-    }
-  };
-
-  const togglePlay = () => {
+  const handlePlayPause = () => {
     if (audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
@@ -67,93 +48,89 @@ function AudioPlayer({ audioUrl }) {
     }
   };
 
-  const handleEnded = () => {
-    setIsPlaying(false);
-    setCurrentTime(0);
+  const handleVolumeChange = (newVolume) => {
     if (audioRef.current) {
-      audioRef.current.currentTime = 0;
+      audioRef.current.volume = newVolume;
+      setVolume(newVolume);
     }
   };
 
-  const handleSliderChange = (event) => {
-    if (!sliderRef.current) return;
-    const sliderRect = sliderRef.current.getBoundingClientRect();
-
-    const clickX = event.clientX;
-    const x = clickX - sliderRect.left;
-    const newTime = (x / sliderRect.width) * duration;
-    setCurrentTime(newTime);
+  const handleSeek = (newTime) => {
     if (audioRef.current) {
       audioRef.current.currentTime = newTime;
-    }
-  };
-
-  const formatTime = (time) => {
-    if (isNaN(time)) return "0:00";
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-  };
-  const sliderWidth = duration > 0 ? (currentTime / duration) * 100 : 0;
-
-  const handleVolumeChangeSlider = (newValue) => {
-    if (audioRef.current) {
-      audioRef.current.volume = newValue;
-      setVolume(newValue);
+      setCurrentTime(newTime);
     }
   };
 
   const toggleMute = () => {
     if (audioRef.current) {
-      audioRef.current.muted = !audioRef.current.muted;
+      audioRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
     }
   };
 
-  const isMuted = audioRef.current ? audioRef.current.muted : false;
+  const formatTime = (time) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(
+      2,
+      "0"
+    )}`;
+  };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="bg-white rounded p-4 shadow-md dark:bg-gray-800">
       <audio ref={audioRef} src={audioUrl} />
-      <button onClick={togglePlay} className="focus:outline-none">
-        {isPlaying ? (
-          <PauseIcon className="h-6 w-6 text-gray-700" />
-        ) : (
-          <PlayIcon className="h-6 w-6 text-gray-700" />
-        )}
-      </button>
 
-      <div className="flex-1">
-        <div
-          ref={sliderRef}
-          onClick={handleSliderChange}
-          className="h-2 bg-gray-300 rounded-full cursor-pointer relative"
-        >
-          <div
-            style={{ width: `${sliderWidth}%` }}
-            className="h-full bg-primary rounded-full "
-          />
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center">
+          <button
+            onClick={handlePlayPause}
+            className="text-gray-700 dark:text-gray-300 focus:outline-none"
+          >
+            {isPlaying ? (
+              <PauseIcon className="h-6 w-6" />
+            ) : (
+              <PlayIcon className="h-6 w-6" />
+            )}
+          </button>
+
+          <button
+            onClick={toggleMute}
+            className="ml-2 text-gray-700 dark:text-gray-300 focus:outline-none"
+          >
+            {isMuted ? (
+              <SpeakerXMarkIcon className="h-6 w-6" />
+            ) : (
+              <SpeakerWaveIcon className="h-6 w-6" />
+            )}
+          </button>
+          <div className="ml-4 flex items-center space-x-2 w-40">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Volume:
+            </label>
+            <Slider
+              value={volume}
+              onChange={handleVolumeChange}
+              min={0}
+              max={1}
+              step={0.1}
+            />
+          </div>
         </div>
-        <div className="text-xs text-gray-500 mt-1 flex justify-between">
-          <span>{formatTime(currentTime)}</span>
-          <span>{formatTime(duration)}</span>
+        <div className="text-gray-700 dark:text-gray-300">
+          {formatTime(currentTime)} / {formatTime(duration)}
         </div>
       </div>
-      <div className="flex items-center gap-1">
-        <button onClick={toggleMute} className="focus:outline-none">
-          {isMuted ? (
-            <SpeakerXMarkIcon className="h-5 w-5 text-gray-700" />
-          ) : (
-            <SpeakerWaveIcon className="h-5 w-5 text-gray-700" />
-          )}
-        </button>
-        <div className="w-20">
-          <Slider
-            min={0}
-            max={1}
-            value={volume}
-            onChange={handleVolumeChangeSlider}
-          />
-        </div>
+      <div className="flex items-center">
+        <Slider
+          value={currentTime}
+          onChange={handleSeek}
+          min={0}
+          max={duration}
+          step={1}
+          className="w-full"
+        />
       </div>
     </div>
   );
