@@ -1,7 +1,7 @@
+// client/src/components/TextToSpeech.jsx
 import React, { useEffect, useState, useCallback } from "react";
 import InputText from "../components/ui/InputText";
 import Dropdown from "../components/ui/Dropdown";
-import Slider from "../components/ui/Slider";
 import Button from "../components/ui/Button";
 import AudioPlayer from "../components/ui/AudioPlayer";
 import { useDispatch, useSelector } from "react-redux";
@@ -15,11 +15,12 @@ import {
 function TextToSpeech() {
   const [text, setTextState] = useState("");
   const dispatch = useDispatch();
-  const { voices, currentLanguage, currentVoice, loading, error, audioUrl } =
-    useSelector((state) => {
+  const { voices, currentLanguage, loading, error, audioUrl } = useSelector(
+    (state) => {
       console.log("Redux state:", state.speech);
       return state.speech;
-    });
+    }
+  );
 
   useEffect(() => {
     dispatch(fetchVoices());
@@ -27,9 +28,8 @@ function TextToSpeech() {
 
   useEffect(() => {
     console.log("TextToSpeech - voices:", voices);
-    console.log("TextToSpeech - currentVoice:", currentVoice);
     console.log("TextToSpeech - currentLanguage:", currentLanguage);
-  }, [voices, currentVoice, currentLanguage]);
+  }, [voices, currentLanguage]);
 
   const handleTextChange = (newText) => {
     dispatch(setText(newText));
@@ -40,26 +40,27 @@ function TextToSpeech() {
     (language) => {
       console.log("Selected language:", language);
       dispatch(setCurrentLanguage(language));
-      if (voices) {
-        const voice = voices.find((v) => v.languageCode === language.id);
-        console.log("found voice for language", voice);
-      }
     },
-    [dispatch, voices, setCurrentLanguage]
+    [dispatch, setCurrentLanguage]
   );
-
-  const [rate, setRate] = useState(0);
-  const [volume, setVolume] = useState(0);
-  const [pitch, setPitch] = useState(0);
 
   const handleGenerateSpeech = async () => {
     try {
-      if (currentVoice && currentVoice.id) {
-        dispatch(generateSpeech({ text, voiceSettings: currentVoice }));
+      if (
+        currentLanguage &&
+        currentLanguage.languageCode &&
+        currentLanguage.option
+      ) {
+        dispatch(
+          generateSpeech({
+            text,
+            lang: currentLanguage.languageCode,
+            option: currentLanguage.option,
+          })
+        );
       } else {
         console.error(
-          "Error: currentVoice is undefined or does not have an ID",
-          currentVoice
+          "Error: currentLanguage is undefined or does not have all the necessary data"
         );
       }
     } catch (error) {
@@ -117,8 +118,9 @@ function TextToSpeech() {
             {voices && voices.length > 0 ? (
               <Dropdown
                 options={voices.map((voice) => ({
-                  id: voice.languageCode,
-                  name: voice.language,
+                  id: `${voice.languageCode}-${voice.option}`,
+                  name: `${voice.language} (${voice.option})`,
+                  ...voice,
                 }))}
                 selected={currentLanguage}
                 onSelect={handleLanguageSelect}
@@ -128,25 +130,6 @@ function TextToSpeech() {
             )}
           </div>
           <div className="mb-4"></div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Rate
-            </label>
-            <Slider value={rate} onChange={setRate} />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Volume
-            </label>
-            <Slider value={volume} onChange={setVolume} />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Pitch
-            </label>
-            <Slider value={pitch} onChange={setPitch} />
-          </div>
           <Button
             onClick={handleGenerateSpeech}
             className="w-full dark:text-white dark:bg-fave dark:hover:bg-[#6c20f3] text-white hover:bg-[#08a8db]"
