@@ -56,7 +56,10 @@ export const fetchVoices = createAsyncThunk(
 
 export const generateSpeech = createAsyncThunk(
   "speech/generateSpeech",
-  async ({ text, lang, option }, { rejectWithValue }) => {
+  async (
+    { text, lang, option, rate, pitch, volume, format },
+    { rejectWithValue }
+  ) => {
     try {
       const response = await axios.post(
         "https://api.edenai.run/v2/audio/text_to_speech",
@@ -65,6 +68,10 @@ export const generateSpeech = createAsyncThunk(
           language: lang,
           text: text,
           option: option,
+          audio_rate: rate,
+          audio_pitch: pitch,
+          audio_volume: volume,
+          audio_format: format,
         },
         {
           headers: {

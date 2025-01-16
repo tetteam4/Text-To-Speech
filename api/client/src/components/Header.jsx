@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import { FaMoon, FaLightbulb } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import { toggleTheme } from "../redux/Theme/themeSlice";
 import { signOutSuccess } from "../redux/user/userSlice";
 import Button from "../components/ui/Button";
+import LogoAnimation from "../pages/LogoAnimation";
 
 export default function Header() {
   const dispatch = useDispatch();
@@ -14,36 +16,36 @@ export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // const handleSignout = async () => {
- 
-   const handleSignout = async () => {
-     try {
-       const res = await fetch("api/user/signout", {
-         method: "POST",
-       });
-       const data = await res.json();
 
-       if (!res.ok) {
-         console.log(data.message);
-       } else {
-         dispatch(signOutSuccess());
-         navgete("/sign-in");
-       }
-     } catch (error) {
-       console.log(error.message);
-     }
-   };
+  const handleSignout = async () => {
+    try {
+      const res = await fetch("api/user/signout", {
+        method: "POST",
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log(data.message);
+      } else {
+        dispatch(signOutSuccess());
+        navgete("/sign-in");
+      }
+    } catch (error) {
+      console.log(error.message);
+    }
+  };
   return (
     <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur dark:bg-gray-900/90 dark:text-white border-gray-300 dark:border-b-1 shadow-md">
-      <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
+      <div className="max-w-8xl mx-auto px-8 py-2 flex items-center justify-between">
         {/* Brand/Logo */}
-        <div className="flex items-center gap-2">
+        <div className=" logo-container flex items-center gap-2">
+          <LogoAnimation />
           <Link
             to="/"
-            className="text-primary dark:text-fave text-2xl font-bold"
+            className="text-primary dark:text-fave text-2xl font-bold pl-8"
           >
             TET TTS App
           </Link>
-          <img src="../public/logo.png" alt="Logo" width={50} height={20} />
         </div>
 
         {/* Desktop Navigation */}

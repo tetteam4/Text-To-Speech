@@ -1,0 +1,81 @@
+.logo-animation-container {
+  width: 50px; /* Adjust as needed */
+  height: 50px; /* Adjust as needed */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+}
+.logo-animation {
+    width: 50px;
+    height: 50px;
+    position: relative;
+}
+.semi-transparent-circle {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background-color: rgba(255, 204, 0, 0.5); /* Semi-transparent yellow */
+  position: absolute;
+    top: 30%;
+    left: 40%;
+  z-index: 1;
+  animation: slideCircle 2s linear infinite;
+}
+
+.ribbon-shape {
+    position: absolute;
+    top: 18%;
+    left: 20%;
+    width: 60px;
+    height: 40px;
+    background: linear-gradient(to right, #007bff, #ff0080); /* Blue to pink */
+    border-radius: 5px;
+    transform: perspective(200px) rotateX(10deg) skewX(-10deg) ;
+    z-index: 2;
+
+}
+
+.solid-circle {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    position: absolute;
+    background-color: rgb(255, 204, 0); /* Solid Yellow */
+    opacity: 0;
+    animation: fadeCircle 2s linear infinite;
+}
+
+@keyframes slideCircle {
+  0% {
+    top: 30%;
+    left: 40%;
+      opacity: 1;
+
+  }
+    70% {
+        top: 50%;
+        left: 50%;
+      opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+
+    100% {
+      top: 30%;
+    left: 40%;
+      opacity: 1;
+
+    }
+}
+@keyframes fadeCircle {
+    0% {
+        opacity: 0;
+    }
+
+    70%{
+        opacity: 0;
+    }
+  100%{
+        opacity: 1;
+    }
+}
