@@ -20,20 +20,25 @@ import axios from "axios";
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 function TextToSpeech() {
-  const [localText, setLocalText] = useState(""); // Added local state
+  const [localText, setLocalText] = useState("");
   const [rate, setRate] = useState(1);
   const [pitch, setPitch] = useState(0);
   const [volume, setVolume] = useState(1);
   const [format, setFormat] = useState("mp3");
   const [fileInputKey, setFileInputKey] = useState(Date.now());
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const dispatch = useDispatch();
-  const { voices, currentLanguage, loading, error, audioUrl } = useSelector(
-    (state) => {
-      console.log("Redux state:", state.speech);
-      return state.speech;
-    }
-  );
-
+  const {
+    voices,
+    currentLanguage,
+    loading: voicesLoading,
+    error,
+    audioUrl,
+  } = useSelector((state) => {
+    console.log("Redux state:", state.speech);
+    return state.speech;
+  });
   useEffect(() => {
     dispatch(fetchVoices());
   }, [dispatch]);
@@ -73,7 +78,7 @@ function TextToSpeech() {
         return;
       }
       dispatch(setText(extractedText));
-      setLocalText(extractedText); // Update local state
+      setLocalText(extractedText);
     } catch (error) {
       console.error("Error extracting text:", error);
     }
@@ -140,6 +145,7 @@ function TextToSpeech() {
   );
 
   const handleGenerateSpeech = async () => {
+    setIsGenerating(true);
     try {
       if (
         currentLanguage &&
@@ -170,21 +176,30 @@ function TextToSpeech() {
       }
     } catch (error) {
       console.error("Error generating speech:", error);
+    } finally {
+      setIsGenerating(false);
     }
   };
+
   const handleDownloadAudio = () => {
     if (audioUrl) {
+      setIsDownloading(true);
       const link = document.createElement("a");
       link.href = audioUrl;
       link.download = `audio.${format}`;
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      setTimeout(() => {
+        setIsDownloading(false);
+      }, 1000); // Re-enable after a short delay (1 second)
     }
   };
+
   const handleClearText = () => {
     dispatch(setText(""));
-    setLocalText(""); // Clear local state
+    setLocalText("");
     setFileInputKey(Date.now());
     dispatch(setAudioUrl(null));
   };
@@ -225,7 +240,7 @@ function TextToSpeech() {
           </div>
           <InputText
             onTextChange={handleTextChange}
-            initialText={localText} // Use local state here
+            initialText={localText}
             placeholder="Enter your text here..."
           />
         </div>
@@ -321,13 +336,13 @@ function TextToSpeech() {
             className="w-full dark:text-white dark:bg-fave dark:hover:bg-[#6c20f3] text-white hover:bg-[#08a8db]"
             size="large"
             variant="primary"
+            disabled={isGenerating}
           >
-            Generate Speech
+            {isGenerating ? "Generating..." : "Generate Speech"}
           </Button>
         </div>
       </div>
       <div className="mt-6">
-        {loading && <p className="dark:text-gray-300">Loading</p>}
         {error && <p className="dark:text-red-300">Error: {error}</p>}
         {audioUrl && <AudioPlayer audioUrl={audioUrl} />}
         {audioUrl && (
@@ -337,8 +352,9 @@ function TextToSpeech() {
               className="dark:text-white dark:bg-fave dark:hover:bg-[#6c20f3] text-white hover:bg-[#08a8db]"
               size="medium"
               variant="primary"
+              disabled={isDownloading}
             >
-              Download Audio
+              {isDownloading ? "Downloading..." : "Download Audio"}
             </Button>
           </div>
         )}

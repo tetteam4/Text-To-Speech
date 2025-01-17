@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import userRoutes from "./routes/user.route.js";
 import authRoutes from "./routes/auth.route.js";
-import speechRoutes from "./routes/speech.js";
+// import speechRoutes from "./routes/speech.js";
 import cookieParser from "cookie-parser";
 import path from "path";
 import cors from "cors";
@@ -44,8 +44,6 @@ app.use("/api/user", userRoutes);
 app.use("/api/auth", authRoutes);
 // app.use("/api/speech", speechRoutes);
 
-// ////dir
-// app.use(express.static(path.join(__dirname, '/client/')));
 app.use(express.static(path.join(__dirname, "/client/dist")));
 
 app.get("*", (req, res) => {
