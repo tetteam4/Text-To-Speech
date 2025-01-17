@@ -1,4 +1,3 @@
-// client/src/components/TextToSpeech.jsx
 import React, { useEffect, useState, useCallback } from "react";
 import InputText from "../components/ui/InputText";
 import Dropdown from "../components/ui/Dropdown";
@@ -11,14 +10,22 @@ import {
   setCurrentLanguage,
   generateSpeech,
   setText,
+  setAudioUrl,
 } from "../redux/user/speechSlice.js";
+import { CloudArrowUpIcon } from "@heroicons/react/24/solid";
+import * as pdfjsLib from "pdfjs-dist/build/pdf";
+import mammoth from "mammoth";
+import axios from "axios";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 function TextToSpeech() {
-  const [text, setTextState] = useState("");
+  const [localText, setLocalText] = useState(""); // Added local state
   const [rate, setRate] = useState(1);
   const [pitch, setPitch] = useState(0);
   const [volume, setVolume] = useState(1);
   const [format, setFormat] = useState("mp3");
+  const [fileInputKey, setFileInputKey] = useState(Date.now());
   const dispatch = useDispatch();
   const { voices, currentLanguage, loading, error, audioUrl } = useSelector(
     (state) => {
@@ -38,7 +45,90 @@ function TextToSpeech() {
 
   const handleTextChange = (newText) => {
     dispatch(setText(newText));
-    setTextState(newText);
+    setLocalText(newText);
+  };
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      let extractedText = "";
+      if (file.type === "text/plain" || file.name.endsWith(".txt")) {
+        extractedText = await readTextFile(file);
+      } else if (
+        file.type === "application/pdf" ||
+        file.name.endsWith(".pdf")
+      ) {
+        extractedText = await readPdfFile(file);
+      } else if (
+        file.type ===
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+        file.name.endsWith(".docx")
+      ) {
+        extractedText = await readDocxFile(file);
+      } else {
+        alert(
+          "Unsupported file format. Please upload a TXT, PDF, or DOCX file."
+        );
+        return;
+      }
+      dispatch(setText(extractedText));
+      setLocalText(extractedText); // Update local state
+    } catch (error) {
+      console.error("Error extracting text:", error);
+    }
+  };
+
+  const readTextFile = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = (e) => reject(e);
+      reader.readAsText(file);
+    });
+  };
+
+  const readPdfFile = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const arrayBuffer = e.target.result;
+          const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+          let text = "";
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const pageTextContent = await page.getTextContent();
+            text += pageTextContent.items
+              .map((s) => s.str)
+              .join("")
+              .concat("\n");
+          }
+          resolve(text);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = (error) => reject(error);
+      reader.readAsArrayBuffer(file);
+    });
+  };
+
+  const readDocxFile = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const buffer = e.target.result;
+          const result = await mammoth.extractRawText({ buffer: buffer });
+          resolve(result.value);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      reader.onerror = (error) => reject(error);
+      reader.readAsArrayBuffer(file);
+    });
   };
 
   const handleLanguageSelect = useCallback(
@@ -56,9 +146,9 @@ function TextToSpeech() {
         currentLanguage.languageCode &&
         currentLanguage.option
       ) {
-        dispatch(
+        const generatedAudioUrl = await dispatch(
           generateSpeech({
-            text,
+            text: localText,
             lang: currentLanguage.languageCode,
             option: currentLanguage.option,
             rate,
@@ -66,7 +156,13 @@ function TextToSpeech() {
             volume,
             format,
           })
-        );
+        ).unwrap();
+        if (generatedAudioUrl) {
+          await axios.post("http://localhost:5000/api/history/save", {
+            text: localText,
+            audioUrl: generatedAudioUrl,
+          });
+        }
       } else {
         console.error(
           "Error: currentLanguage is undefined or does not have all the necessary data"
@@ -75,6 +171,22 @@ function TextToSpeech() {
     } catch (error) {
       console.error("Error generating speech:", error);
     }
+  };
+  const handleDownloadAudio = () => {
+    if (audioUrl) {
+      const link = document.createElement("a");
+      link.href = audioUrl;
+      link.download = `audio.${format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+  const handleClearText = () => {
+    dispatch(setText(""));
+    setLocalText(""); // Clear local state
+    setFileInputKey(Date.now());
+    dispatch(setAudioUrl(null));
   };
 
   return (
@@ -87,16 +199,33 @@ function TextToSpeech() {
           <Button variant="secondary" size="small">
             Pauses
           </Button>
-          <Button variant="secondary" size="small">
+          <Button onClick={handleClearText} variant="secondary" size="small">
             Clear Text
           </Button>
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
         <div className="md:col-span-2">
+          <div className="mb-4 flex items-center gap-2">
+            <label
+              htmlFor="file-upload"
+              className="cursor-pointer text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
+            >
+              <CloudArrowUpIcon className="h-6 w-6 inline-block mr-1" />
+              Upload File
+            </label>
+            <input
+              id="file-upload"
+              type="file"
+              accept=".txt, .pdf, .docx"
+              key={fileInputKey}
+              onChange={handleFileChange}
+              className="hidden"
+            />
+          </div>
           <InputText
             onTextChange={handleTextChange}
-            initialText={text}
+            initialText={localText} // Use local state here
             placeholder="Enter your text here..."
           />
         </div>
@@ -201,6 +330,18 @@ function TextToSpeech() {
         {loading && <p className="dark:text-gray-300">Loading</p>}
         {error && <p className="dark:text-red-300">Error: {error}</p>}
         {audioUrl && <AudioPlayer audioUrl={audioUrl} />}
+        {audioUrl && (
+          <div className="mt-4">
+            <Button
+              onClick={handleDownloadAudio}
+              className="dark:text-white dark:bg-fave dark:hover:bg-[#6c20f3] text-white hover:bg-[#08a8db]"
+              size="medium"
+              variant="primary"
+            >
+              Download Audio
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
