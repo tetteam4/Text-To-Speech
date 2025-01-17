@@ -10,32 +10,37 @@ import Slider from "./Slider";
 function AudioPlayer({ audioUrl }) {
   const audioRef = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(1); // Initial volume is 1 (full volume)
+  const [volume, setVolume] = useState(1);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.addEventListener("loadedmetadata", () => {
-        setDuration(audioRef.current.duration);
-      });
-      audioRef.current.addEventListener("timeupdate", () => {
-        setCurrentTime(audioRef.current.currentTime);
-      });
-    }
+    const audio = audioRef.current;
+    if (audio) {
+      const handleLoadedMetadata = () => {
+        setDuration(audio.duration);
+      };
 
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.removeEventListener("loadedmetadata", () => {
-          setDuration(audioRef.current.duration);
-        });
-        audioRef.current.removeEventListener("timeupdate", () => {
-          setCurrentTime(audioRef.current.currentTime);
-        });
-      }
-    };
-  }, [audioRef]);
+      const handleTimeUpdate = () => {
+        setCurrentTime(audio.currentTime);
+        setProgress((audio.currentTime / audio.duration) * 100);
+      };
+      const handleEnded = () => {
+        setIsPlaying(false);
+      };
+      audio.addEventListener("loadedmetadata", handleLoadedMetadata);
+      audio.addEventListener("timeupdate", handleTimeUpdate);
+      audio.addEventListener("ended", handleEnded);
+
+      return () => {
+        audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
+        audio.removeEventListener("timeupdate", handleTimeUpdate);
+        audio.removeEventListener("ended", handleEnded);
+      };
+    }
+  }, [audioUrl, audioRef]);
 
   const handlePlayPause = () => {
     if (audioRef.current) {
@@ -55,13 +60,14 @@ function AudioPlayer({ audioUrl }) {
     }
   };
 
-  const handleSeek = (newTime) => {
+  const handleSeek = (newProgress) => {
     if (audioRef.current) {
+      const newTime = (newProgress / 100) * duration;
       audioRef.current.currentTime = newTime;
       setCurrentTime(newTime);
+      setProgress(newProgress);
     }
   };
-
   const toggleMute = () => {
     if (audioRef.current) {
       audioRef.current.muted = !isMuted;
@@ -124,10 +130,10 @@ function AudioPlayer({ audioUrl }) {
       </div>
       <div className="flex items-center">
         <Slider
-          value={currentTime}
+          value={progress}
           onChange={handleSeek}
           min={0}
-          max={duration}
+          max={100}
           step={1}
           className="w-full"
         />
