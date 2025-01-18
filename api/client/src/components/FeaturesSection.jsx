@@ -1,24 +1,24 @@
-// client/src/components/FeaturesSection.jsx
-import React, { useState, useRef, useEffect } from "react";
+import React from "react";
 import { MdOutlineSpeaker, MdLanguage } from "react-icons/md";
 import { AiOutlineFileText } from "react-icons/ai";
 import { PiTextT, PiGearDuotone } from "react-icons/pi";
-import { useSelector } from "react-redux";
+import Slider from "./ui/Slider"; // Adjust path if needed
 
 function FeaturesSection() {
-  const { voices } = useSelector((state) => state.speech);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const sliderRef = useRef(null);
-  const [languages, setLanguages] = useState([]);
-
-  useEffect(() => {
-    if (voices && voices.length > 0) {
-      const uniqueLanguages = Array.from(
-        new Set(voices.map((voice) => voice.language))
-      );
-      setLanguages(uniqueLanguages);
-    }
-  }, [voices]);
+  const fixedLanguages = [
+    "English",
+    "Spanish",
+    "French",
+    "German",
+    "Italian",
+    "Portuguese",
+    "Dutch",
+    "Russian",
+    "Arabic",
+    "Chinese",
+    "Japanese",
+    "Korean",
+  ];
 
   const features = [
     {
@@ -76,7 +76,7 @@ function FeaturesSection() {
       case "English":
         return "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Flag_of_the_United_Kingdom.svg/800px-Flag_of_the_United_Kingdom.svg.png";
       case "Spanish":
-        return "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Bandera_de_Espa%C3%B1a.svg/800px-Bandera_de_Espa%C3%B1a.svg.png";
+        return "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Bandera_de_Espa%C3%B1a.svg/800px-Flag_de_Espa%C3%B1a.svg.png";
       case "French":
         return "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Flag_of_France_%281794%E2%80%931815%2C_1830%E2%80%931958%29.svg/800px-Flag_of_France_%281794%E2%80%931815%2C_1830%E2%80%931958%29.svg.png";
       case "German":
@@ -101,29 +101,6 @@ function FeaturesSection() {
         return "";
     }
   };
-
-  const handleClick = (index) => {
-    if (sliderRef.current) {
-      const itemWidth = sliderRef.current.children[0].offsetWidth;
-      const containerWidth = sliderRef.current.offsetWidth;
-      const targetScrollLeft =
-        itemWidth * index - containerWidth / 2 + itemWidth / 2;
-
-      sliderRef.current.scrollTo({
-        left: targetScrollLeft,
-        behavior: "smooth",
-      });
-      setCurrentSlide(index);
-    }
-  };
-
-  useEffect(() => {
-    if (sliderRef.current && languages.length > 0) {
-      const initialScroll =
-        (sliderRef.current.scrollWidth - sliderRef.current.offsetWidth) / 2;
-      sliderRef.current.scrollLeft = initialScroll;
-    }
-  }, [languages]);
 
   return (
     <div className="mt-24">
@@ -177,35 +154,25 @@ function FeaturesSection() {
           Easily convert text to speech, choose your favorite language and
           voice:
         </h2>
-        <div className="relative">
-          <div
-            ref={sliderRef}
-            className="flex overflow-x-hidden gap-4 p-2 relative scroll-smooth"
-          >
-            {languages.map((language, index) => (
-              <div
-                key={index}
-                onClick={() => handleClick(index)}
-                className={`flex flex-col items-center p-4 border border-gray-300 rounded shadow-sm dark:border-gray-700 cursor-pointer
-                                ${
-                                  index === currentSlide
-                                    ? "scale-110 transition-transform duration-300"
-                                    : ""
-                                }
-                                `}
-              >
-                <img
-                  src={getFlagImage(language)}
-                  alt={`${language} Flag`}
-                  className="h-12 w-18 mb-2"
-                />
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {language}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
+        <Slider
+          items={fixedLanguages?.map((language, index) => (
+            <div
+              key={index}
+              className={`flex flex-col items-center p-4 border border-gray-300 rounded shadow-sm dark:border-gray-700 cursor-pointer`}
+            >
+              <img
+                src={getFlagImage(language)}
+                alt={`${language} Flag`}
+                className="h-12 w-18 mb-2"
+              />
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {language}
+              </p>
+            </div>
+          ))}
+          className={"max-w-5xl mx-auto"}
+          loop
+        />
       </div>
     </div>
   );

@@ -15,7 +15,6 @@ export default function Header() {
   const { theme } = useSelector((state) => state.theme);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // const handleSignout = async () => {
 
   const handleSignout = async () => {
     try {
