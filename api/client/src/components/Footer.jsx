@@ -4,7 +4,7 @@ import { BsFacebook, BsInstagram, BsTwitter, BsEnvelope } from "react-icons/bs";
 function FooterCom() {
   return (
     <footer className="border border-t-2 dark:border-t-0 bottom-0 w-full z-40 bg-white/90 backdrop-blur dark:bg-gray-900/90 dark:text-white shadow-md ">
-      <div className="max-w-7xl mx-auto px-4 py-6 md:py-8">
+      <div className="max-w-8xl mx-auto px-4 py-6 md:py-8">
         <div className="flex flex-col sm:flex-row sm:justify-between items-start relative z-10">
           {/* Brand/Info */}
           <div className="flex flex-col items-center sm:items-start mb-4 sm:mb-0">

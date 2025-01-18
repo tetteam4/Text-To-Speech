@@ -13,6 +13,7 @@ import OnlyAdminPrivateRoute from "./components/OnlyAdmin";
 import UserProfile from "./pages/Profile";
 import ScrollTop from "./components/ScrollTop";
 import NotFoundPage from "./pages/NotFoundPage";
+import Text from "./pages/Text";
 // import Search from "./pages/Search";
 
 export default function App() {
@@ -34,7 +35,7 @@ export default function App() {
             {/* <Route path="/update-post/:postId" element={<UpdatePost />} /> */}
           </Route>
           <Route path="*" element={<NotFoundPage />} />
-          {/* <Route path="/post/:postSlug" element={<PostPage />} /> */}
+          <Route path="/text" element={<Text />} />
         </Routes>
         <Footer />
       </BrowserRouter>
