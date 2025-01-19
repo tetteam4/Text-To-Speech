@@ -2,7 +2,7 @@ import React from "react";
 import { MdOutlineSpeaker, MdLanguage } from "react-icons/md";
 import { AiOutlineFileText } from "react-icons/ai";
 import { PiTextT, PiGearDuotone } from "react-icons/pi";
-import Slider from "./ui/Slider"; // Adjust path if needed
+import Slider from "./ui/Slider";
 
 function FeaturesSection() {
   const fixedLanguages = [
@@ -171,7 +171,9 @@ function FeaturesSection() {
             </div>
           ))}
           className={"max-w-5xl mx-auto"}
-          loop
+          loop={true}
+          sliderPerView={3}
+          autoplay={true} // Enable autoplay
         />
       </div>
     </div>

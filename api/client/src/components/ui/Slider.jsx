@@ -1,30 +1,28 @@
 import React from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Autoplay } from "swiper/modules"; // Add Autoplay if needed
-
+import { Navigation, Autoplay } from "swiper/modules"; // Import Autoplay module
 import "swiper/css";
 import "swiper/css/navigation";
 
 function Slider({
   items,
-  min = 0,
-  max = 100,
-  loop = false,
-  autoplay = false,
+  loop = true,
+  autoplay = false, // Correctly set the default value of autoplay
   className,
   slideClassName,
+  sliderPerView = 3,
 }) {
   return (
     <div className={`relative w-full ${className}`}>
       <Swiper
-        modules={[Navigation, Autoplay]}
+        modules={[Navigation, Autoplay]} // Include Autoplay in modules
         spaceBetween={10}
-        slidesPerView={1}
+        slidesPerView={sliderPerView}
         loop={loop}
         autoplay={
           autoplay
             ? {
-                delay: 2000,
+                delay: 1000,
                 disableOnInteraction: false,
               }
             : false
