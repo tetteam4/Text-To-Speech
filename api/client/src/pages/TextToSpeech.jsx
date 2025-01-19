@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import InputText from "../components/ui/InputText";
 import Dropdown from "../components/ui/Dropdown";
 import Slider from "../components/ui/Slider";
@@ -17,18 +17,31 @@ import * as pdfjsLib from "pdfjs-dist/build/pdf";
 import mammoth from "mammoth";
 import axios from "axios";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-
 function TextToSpeech() {
   const [localText, setLocalText] = useState("");
-  const [rate, setRate] = useState(1);
+  const [rate, setRate] = useState(0);
   const [pitch, setPitch] = useState(0);
-  const [volume, setVolume] = useState(1);
+  const [volume, setVolume] = useState(0);
   const [format, setFormat] = useState("mp3");
   const [fileInputKey, setFileInputKey] = useState(Date.now());
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [voiceType, setVoiceType] = useState("standard");
+  const [pauseDropdownOpen, setPauseDropdownOpen] = useState(false);
+  const [selectedPause, setSelectedPause] = useState("0.5s");
+  const pdfjsLibRef = useRef(null); // Create a ref for the pdfjsLib
+
+  const pauseOptions = ["0.5s", "1s", "2s", "3s", "4s", "5s"];
+
+  useEffect(() => {
+    // Set workerSrc as the component mounts
+    pdfjsLibRef.current = pdfjsLib;
+    pdfjsLibRef.current.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
+    console.log(pdfjsLibRef.current.GlobalWorkerOptions.workerSrc);
+  }, []);
+
   const dispatch = useDispatch();
+
   const {
     voices,
     currentLanguage,
@@ -39,19 +52,16 @@ function TextToSpeech() {
     console.log("Redux state:", state.speech);
     return state.speech;
   });
+
   useEffect(() => {
     dispatch(fetchVoices());
   }, [dispatch]);
-
-  useEffect(() => {
-    console.log("TextToSpeech - voices:", voices);
-    console.log("TextToSpeech - currentLanguage:", currentLanguage);
-  }, [voices, currentLanguage]);
 
   const handleTextChange = (newText) => {
     dispatch(setText(newText));
     setLocalText(newText);
   };
+
   const handleFileChange = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -77,8 +87,8 @@ function TextToSpeech() {
         );
         return;
       }
-      dispatch(setText(extractedText));
-      setLocalText(extractedText);
+      dispatch(setText(extractedText)); // Update Redux state
+      setLocalText(extractedText); // Update local state
     } catch (error) {
       console.error("Error extracting text:", error);
     }
@@ -94,12 +104,13 @@ function TextToSpeech() {
   };
 
   const readPdfFile = (file) => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
           const arrayBuffer = e.target.result;
-          const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+          const pdf = await pdfjsLibRef.current.getDocument(arrayBuffer)
+            .promise;
           let text = "";
           for (let i = 1; i <= pdf.numPages; i++) {
             const page = await pdf.getPage(i);
@@ -144,6 +155,19 @@ function TextToSpeech() {
     [dispatch, setCurrentLanguage]
   );
 
+  const togglePauseDropdown = () => {
+    setPauseDropdownOpen(!pauseDropdownOpen);
+  };
+
+  const handlePauseSelect = (pause) => {
+    setSelectedPause(pause);
+    setPauseDropdownOpen(false);
+  };
+
+  const handleVoiceTypeSelect = (type) => {
+    setVoiceType(type);
+  };
+
   const handleGenerateSpeech = async () => {
     setIsGenerating(true);
     try {
@@ -152,14 +176,19 @@ function TextToSpeech() {
         currentLanguage.languageCode &&
         currentLanguage.option
       ) {
+        let processedText = localText;
+        if (selectedPause !== "0s") {
+          const sentences = localText.split(/[\n\r]+|\.\s+/).filter(Boolean);
+          processedText = sentences.join(` <break time="${selectedPause}"/> `);
+        }
         const generatedAudioUrl = await dispatch(
           generateSpeech({
-            text: localText,
+            text: processedText,
             lang: currentLanguage.languageCode,
             option: currentLanguage.option,
-            rate,
+            rate: rate / 100,
             pitch,
-            volume,
+            volume: volume / 100,
             format,
           })
         ).unwrap();
@@ -193,7 +222,7 @@ function TextToSpeech() {
       document.body.removeChild(link);
       setTimeout(() => {
         setIsDownloading(false);
-      }, 1000); // Re-enable after a short delay (1 second)
+      }, 1000);
     }
   };
 
@@ -203,6 +232,12 @@ function TextToSpeech() {
     setFileInputKey(Date.now());
     dispatch(setAudioUrl(null));
   };
+  
+  const resetVoiceSettings = () => {
+    setRate(0);
+    setPitch(0);
+    setVolume(0);
+  };
 
   return (
     <div className="p-4 md:p-6 lg:p-8 w-full pt-16">
@@ -211,16 +246,35 @@ function TextToSpeech() {
           Text to Speech
         </h2>
         <div className="flex items-center gap-2">
-          <Button variant="secondary" size="small">
-            Pauses
-          </Button>
+          <div className="relative">
+            <Button
+              onClick={togglePauseDropdown}
+              variant="secondary"
+              size="small"
+            >
+              Pauses
+            </Button>
+            {pauseDropdownOpen && (
+              <div className="absolute z-10 mt-1 bg-white border border-gray-300 rounded shadow-md dark:bg-gray-800 dark:border-gray-700">
+                {pauseOptions.map((pause) => (
+                  <div
+                    key={pause}
+                    onClick={() => handlePauseSelect(pause)}
+                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 cursor-pointer"
+                  >
+                    {pause}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           <Button onClick={handleClearText} variant="secondary" size="small">
             Clear Text
           </Button>
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
-        <div className="md:col-span-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
+        <div className="md:col-span-1">
           <div className="mb-4 flex items-center gap-2">
             <label
               htmlFor="file-upload"
@@ -249,16 +303,24 @@ function TextToSpeech() {
             <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300">
               Voice Settings
             </h3>
-            <Button variant="white" size="small">
-              Reset
+            <Button onClick={resetVoiceSettings} variant="white" size="small">
+              Reset to Default
             </Button>
           </div>
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
-              <Button variant="white" size="small">
+              <Button
+                variant={voiceType === "standard" ? "primary" : "white"}
+                size="small"
+                onClick={() => handleVoiceTypeSelect("standard")}
+              >
                 Standard Voice
               </Button>
-              <Button variant="secondary" size="small">
+              <Button
+                variant={voiceType === "cloned" ? "primary" : "secondary"}
+                size="small"
+                onClick={() => handleVoiceTypeSelect("cloned")}
+              >
                 Cloned Voice
               </Button>
             </div>
@@ -289,9 +351,9 @@ function TextToSpeech() {
             <Slider
               value={rate}
               onChange={setRate}
-              min={0.5}
-              max={2}
-              step={0.1}
+              min={0}
+              max={200}
+              step={1}
             />
           </div>
           <div className="mb-4">
@@ -302,8 +364,8 @@ function TextToSpeech() {
               value={volume}
               onChange={setVolume}
               min={0}
-              max={1}
-              step={0.1}
+              max={100}
+              step={1}
             />
           </div>
           <div className="mb-4">

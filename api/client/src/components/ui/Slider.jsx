@@ -1,46 +1,36 @@
 import React from "react";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation, Autoplay } from "swiper/modules"; // Import Autoplay module
-import "swiper/css";
-import "swiper/css/navigation";
 
-function Slider({
-  items,
-  loop = true,
-  autoplay = false, // Correctly set the default value of autoplay
-  className,
-  slideClassName,
-  sliderPerView = 3,
-}) {
+const Slider = ({ value, onChange, min, max, step }) => {
+  const handleChange = (e) => {
+    onChange(parseFloat(e.target.value));
+  };
+
   return (
-    <div className={`relative w-full ${className}`}>
-      <Swiper
-        modules={[Navigation, Autoplay]} // Include Autoplay in modules
-        spaceBetween={10}
-        slidesPerView={sliderPerView}
-        loop={loop}
-        autoplay={
-          autoplay
-            ? {
-                delay: 1000,
-                disableOnInteraction: false,
-              }
-            : false
-        }
-        navigation
-        className="h-full"
+    <div className="relative">
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={handleChange}
+        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+        style={{
+          background: `linear-gradient(to right, #007bff ${
+            ((value - min) / (max - min)) * 100
+          }%, #d3d3d3 ${((value - min) / (max - min)) * 100}%)`,
+        }}
+      />
+      <div
+        className="absolute -top-4 left-1/2 transform -translate-x-1/2 text-sm text-gray-500 dark:text-gray-300"
+        style={{
+          left: `${((value - min) / (max - min)) * 100}%`,
+        }}
       >
-        {items?.map((item, index) => (
-          <SwiperSlide
-            key={index}
-            className={`flex items-center  ${slideClassName}`}
-          >
-            {typeof item === "function" ? item() : item}
-          </SwiperSlide>
-        ))}
-      </Swiper>
+        {value}
+      </div>
     </div>
   );
-}
+};
 
 export default Slider;
