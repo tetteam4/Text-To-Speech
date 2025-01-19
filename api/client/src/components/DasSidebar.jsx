@@ -244,34 +244,6 @@ function DashSidebar({ toggleSidebar, isSidebarOpen }) {
         {/*Only admin user can see this links */}
         {currentUser.isAdmin && (
           <>
-            {/*Project Dashboard */}
-            <Link
-              to="/dashboard?tab=projects"
-              onClick={() => setCloseOnClick(true)}
-              className="relative"
-            >
-              <div
-                className={`
-                                    flex items-center  rounded-md p-2
-                                     hover:bg-gray-200 dark:hover:bg-gray-700
-                                     ${
-                                       tab === "projects"
-                                         ? "bg-gray-200 dark:bg-gray-700"
-                                         : " "
-                                     }
-                                  `}
-              >
-                <span className="flex items-center gap-2 ">
-                  <HiAnnotation className="h-6 w-6 text-gray-700 dark:text-gray-300" />
-                  {isSidebarOpen && (
-                    <span className="text-gray-700 dark:text-gray-300">
-                      Project Dashboard
-                    </span>
-                  )}
-                </span>
-              </div>
-            </Link>
-            {/* User Item */}
             <Link
               to="/dashboard?tab=users"
               onClick={() => setCloseOnClick(true)}

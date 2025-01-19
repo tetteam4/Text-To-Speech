@@ -6,9 +6,7 @@ import DashUsers from "../components/DashUsers";
 import History from "./History";
 import TextToSpeech from "./TextToSpeech";
 import FileToSpeech from "./FileToSpeech";
-import ProjectDashboard from "./ProjectDashboard";
 import DashboardComp from "../components/DashboardComp";
-import NotFoundPage from "./NotFoundPage";
 
 export default function Dashboard() {
     const location = useLocation();
@@ -48,7 +46,6 @@ export default function Dashboard() {
                 {tab === "text-to-speech" && <TextToSpeech />}
                 {tab === "dash"           && <DashboardComp />}
                 {tab === "file-to-speech" && <FileToSpeech />}
-                {tab === "projects"       && <ProjectDashboard />}
 
             </div>
         </div>

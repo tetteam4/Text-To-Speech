@@ -9,7 +9,7 @@ const initialState = {
 };
 
 export const fetchHistory = createAsyncThunk(
-  "history/fetchProjects",
+  "history",
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get(
