@@ -27,9 +27,11 @@ function AudioPlayer({ audioUrl }) {
         setCurrentTime(audio.currentTime);
         setProgress((audio.currentTime / audio.duration) * 100);
       };
+
       const handleEnded = () => {
         setIsPlaying(false);
       };
+
       audio.addEventListener("loadedmetadata", handleLoadedMetadata);
       audio.addEventListener("timeupdate", handleTimeUpdate);
       audio.addEventListener("ended", handleEnded);
@@ -53,6 +55,7 @@ function AudioPlayer({ audioUrl }) {
     }
   };
 
+  
   const handleVolumeChange = (newVolume) => {
     if (audioRef.current) {
       audioRef.current.volume = newVolume;
