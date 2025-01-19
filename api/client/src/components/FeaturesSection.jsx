@@ -1,25 +1,11 @@
+// client/src/components/FeaturesSection.jsx
 import React from "react";
 import { MdOutlineSpeaker, MdLanguage } from "react-icons/md";
-import { AiOutlineFileText } from "react-icons/ai";
+import { AiOutlineFileText, AiOutlineClockCircle } from "react-icons/ai";
 import { PiTextT, PiGearDuotone } from "react-icons/pi";
-import Slider from "./ui/Slider";
+import { Button } from "flowbite-react";
 
 function FeaturesSection() {
-  const fixedLanguages = [
-    "English",
-    "Spanish",
-    "French",
-    "German",
-    "Italian",
-    "Portuguese",
-    "Dutch",
-    "Russian",
-    "Arabic",
-    "Chinese",
-    "Japanese",
-    "Korean",
-  ];
-
   const features = [
     {
       title: "Real AI Voice",
@@ -71,37 +57,28 @@ function FeaturesSection() {
     },
   ];
 
-  const getFlagImage = (language) => {
-    switch (language) {
-      case "English":
-        return "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Flag_of_the_United_Kingdom.svg/800px-Flag_of_the_United_Kingdom.svg.png";
-      case "Spanish":
-        return "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Bandera_de_Espa%C3%B1a.svg/800px-Flag_de_Espa%C3%B1a.svg.png";
-      case "French":
-        return "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Flag_of_France_%281794%E2%80%931815%2C_1830%E2%80%931958%29.svg/800px-Flag_of_France_%281794%E2%80%931815%2C_1830%E2%80%931958%29.svg.png";
-      case "German":
-        return "https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Flag_of_Germany.svg/800px-Flag_of_Germany.svg.png";
-      case "Italian":
-        return "https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Flag_of_Italy.svg/800px-Flag_of_Italy.svg.png";
-      case "Portuguese":
-        return "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Flag_of_Portugal.svg/800px-Flag_of_Portugal.svg.png";
-      case "Dutch":
-        return "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Flag_of_the_Netherlands.svg/800px-Flag_of_the_Netherlands.svg.png";
-      case "Russian":
-        return "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Flag_of_Russia.svg/800px-Flag_of_Russia.svg.png";
-      case "Arabic":
-        return "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Flag_of_the_Arab_League.svg/800px-Flag_of_the_Arab_League.svg.png";
-      case "Chinese":
-        return "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Flag_of_the_People%27s_Republic_of_China.svg/800px-Flag_of_the_People%27s_Republic_of_China.svg.png";
-      case "Japanese":
-        return "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Flag_of_Japan.svg/800px-Flag_of_Japan.svg.png";
-      case "Korean":
-        return "https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Flag_of_South_Korea.svg/800px-Flag_of_South_Korea.svg.png";
-      default:
-        return "";
-    }
-  };
-
+  const languages = [
+    "English",
+    "Spanish",
+    "Chinese",
+    "German",
+    "French",
+    "Italian",
+    "Japanese",
+    "Korean",
+    "Portuguese",
+    "Russian",
+    "Thai",
+    "Turkish",
+    "Vietnamese",
+    "Arabic",
+    "Hindi",
+    "Bengali",
+    "Catalan",
+    "Czech",
+    "Danish",
+    "Dutch",
+  ];
   return (
     <div className="mt-24">
       <div className="max-w-6xl mx-auto text-center mb-10 mt-4">
@@ -154,30 +131,15 @@ function FeaturesSection() {
           Easily convert text to speech, choose your favorite language and
           voice:
         </h2>
-        <Slider
-          items={fixedLanguages?.map((language, index) => (
-            <div
-              key={index}
-              className={`flex flex-col items-center p-4 border border-gray-300 rounded shadow-sm dark:border-gray-700 cursor-pointer`}
-            >
-              <img
-                src={getFlagImage(language)}
-                alt={`${language} Flag`}
-                className="h-12 w-18 mb-2"
-              />
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {language}
-              </p>
-            </div>
+        <div className="grid grid-cols-3 md:grid-cols-5 gap-3 mt-6">
+          {languages.map((language) => (
+            <Button key={language} variant="primary" size="small">
+              {language}
+            </Button>
           ))}
-          className={"max-w-5xl mx-auto"}
-          loop={true}
-          sliderPerView={3}
-          autoplay={true} // Enable autoplay
-        />
+        </div>
       </div>
     </div>
   );
 }
-
 export default FeaturesSection;
