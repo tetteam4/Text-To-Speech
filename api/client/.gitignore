@@ -1,3 +1,5 @@
 node_modules,
 databases.drawio
 node_modules
+
+api/api/google-credentials.json
