@@ -1,18 +1,10 @@
-// routes/audio.route.js
-import express from "express";
-import {
-  convertFileToSpeech,
-  getAudioHistory,
-  shareAudioFile,
-  getAudioFile,
-} from "../controlers/audio.controller.js";
-import { verifyToken } from "../utils/verifyUser.js";
+// // backend/routes/audio.route.js
+// import express from "express";
+// import { verifyToken } from "../utils/verifyUser.js";
+// import { generateSpeech, shareAudio } from "../controlers/audio.controller.js";
 
-const router = express.Router();
-
-router.post("/convert", verifyToken, convertFileToSpeech);
-router.get("/history", verifyToken, getAudioHistory);
-router.post("/share/:audioId", verifyToken, shareAudioFile);
-router.get("/:audioId", verifyToken, getAudioFile);
-
-export default router;
+// const router = express.Router();
+// router.post("/generate", verifyToken, generateSpeech);
+// router.post("/share/:audioId", verifyToken, shareAudio);
+// export default router;
+// //
