@@ -16,6 +16,7 @@ import { CloudArrowUpIcon } from "@heroicons/react/24/solid";
 import * as pdfjsLib from "pdfjs-dist/build/pdf";
 import mammoth from "mammoth";
 import axios from "axios";
+import { saveHistory } from "../redux/user/historySlice.js";
 
 function TextToSpeech() {
   const [localText, setLocalText] = useState("");
@@ -168,6 +169,47 @@ function TextToSpeech() {
     setVoiceType(type);
   };
 
+  // const handleGenerateSpeech = async () => {
+  //   setIsGenerating(true);
+  //   try {
+  //     if (
+  //       currentLanguage &&
+  //       currentLanguage.languageCode &&
+  //       currentLanguage.option
+  //     ) {
+  //       let processedText = localText;
+  //       if (selectedPause !== "0s") {
+  //         const sentences = localText.split(/[\n\r]+|\.\s+/).filter(Boolean);
+  //         processedText = sentences.join(` <break time="${selectedPause}"/> `);
+  //       }
+  //       const generatedAudioUrl = await dispatch(
+  //         generateSpeech({
+  //           text: processedText,
+  //           lang: currentLanguage.languageCode,
+  //           option: currentLanguage.option,
+  //           rate: rate / 100,
+  //           pitch,
+  //           volume: volume / 100,
+  //           format,
+  //         })
+  //       ).unwrap();
+  //       if (generatedAudioUrl) {
+  //         await axios.post("http://localhost:5000/api/history/save", {
+  //           text: localText,
+  //           audioUrl: generatedAudioUrl,
+  //         });
+  //       }
+  //     } else {
+  //       console.error(
+  //         "Error: currentLanguage is undefined or does not have all the necessary data"
+  //       );
+  //     }
+  //   } catch (error) {
+  //     console.error("Error generating speech:", error);
+  //   } finally {
+  //     setIsGenerating(false);
+  //   }
+  // };
   const handleGenerateSpeech = async () => {
     setIsGenerating(true);
     try {
@@ -193,10 +235,13 @@ function TextToSpeech() {
           })
         ).unwrap();
         if (generatedAudioUrl) {
-          await axios.post("http://localhost:5000/api/history/save", {
+          const audioData = {
             text: localText,
             audioUrl: generatedAudioUrl,
-          });
+            voiceSettings: currentLanguage,
+          };
+          await dispatch(saveHistory(audioData)).unwrap();
+     
         }
       } else {
         console.error(
@@ -209,7 +254,6 @@ function TextToSpeech() {
       setIsGenerating(false);
     }
   };
-
   const handleDownloadAudio = () => {
     if (audioUrl) {
       setIsDownloading(true);

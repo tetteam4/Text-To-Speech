@@ -1,4 +1,3 @@
-// client/src/store/historySlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
@@ -9,11 +8,11 @@ const initialState = {
 };
 
 export const fetchHistory = createAsyncThunk(
-  "history",
+  "history/fetchHistory",
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/projects`,
+        `/api/audio/history`,
         {
           withCredentials: true,
           headers: {
@@ -23,7 +22,25 @@ export const fetchHistory = createAsyncThunk(
       );
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.message || "Error fetching projects");
+      return rejectWithValue(error.message || "Error fetching history");
+    }
+  }
+);
+console.log("VITE_BASE_URL:", import.meta.env.VITE_BASE_URL);
+
+export const saveHistory = createAsyncThunk(
+  "history/saveHistory",
+  async (audioData, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`/api/audio/save`, audioData, {
+        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.message || "Error saving audio history");
     }
   }
 );
@@ -33,7 +50,9 @@ export const generateDownloadUrl = createAsyncThunk(
   async (filename, { rejectWithValue }) => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/storage/get-download-url/${filename}`,
+        `${
+          import.meta.env.VITE_BASE_URL
+        }/api/storage/get-download-url/${filename}`,
         {
           withCredentials: true,
           headers: {
@@ -70,6 +89,17 @@ const HistorySlice = createSlice({
         state.history = action.payload;
       })
       .addCase(fetchHistory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(saveHistory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(saveHistory.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(saveHistory.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

@@ -14,6 +14,40 @@ function History() {
   const { history, loading, error } = useSelector((state) => state.history);
   const { currentUser } = useSelector((state) => state.user);
 
+  // const columns = [
+  //   { label: "Text", key: "originalText" },
+  //   {
+  //     label: "Voice",
+  //     key: "voiceSettings",
+  //     render: (voiceSettings) => voiceSettings?.name || "N/A",
+  //   },
+  //   {
+  //     label: "Created At",
+  //     key: "createdAt",
+  //     render: (createdAt) => new Date(createdAt).toLocaleString(),
+  //   },
+  //   {
+  //     label: "Audio",
+  //     key: "audioFileUrl",
+  //     render: (audioFileUrl, row) => (
+  //       <div className="flex gap-2">
+  //         {audioFileUrl && <AudioPlayer audioUrl={audioFileUrl} />}
+  //         <Button onClick={() => handleShare(row.id)} size="small">
+  //           Share
+  //         </Button>
+  //         <Button
+  //           onClick={() => handleWhatsAppShare(audioFileUrl)}
+  //           size="small"
+  //         >
+  //           <FaWhatsapp />
+  //         </Button>
+  //         <Button onClick={() => handleEmailShare(audioFileUrl)} size="small">
+  //           <FaEnvelope />
+  //         </Button>
+  //       </div>
+  //     ),
+  //   },
+  // ];
   const columns = [
     { label: "Text", key: "originalText" },
     {
@@ -31,7 +65,12 @@ function History() {
       key: "audioFileUrl",
       render: (audioFileUrl, row) => (
         <div className="flex gap-2">
-          {audioFileUrl && <AudioPlayer audioUrl={audioFileUrl} />}
+          <Button
+            onClick={() => handleDownload(audioFileUrl, row.id)}
+            size="small"
+          >
+            Download
+          </Button>
           <Button onClick={() => handleShare(row.id)} size="small">
             Share
           </Button>
@@ -48,7 +87,7 @@ function History() {
       ),
     },
   ];
-
+  
   useEffect(() => {
     dispatch(fetchHistory());
   }, [dispatch, currentUser]);

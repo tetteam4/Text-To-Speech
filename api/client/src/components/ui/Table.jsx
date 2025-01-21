@@ -1,33 +1,32 @@
 // client/src/components/ui/Table.jsx
 import React from "react";
+import PropTypes from "prop-types";
 
-function Table({ columns, data, emptyMessage = "No data available" }) {
+function Table({ columns, data, emptyMessage }) {
   return (
-    <div className="overflow-x-auto w-full">
-      <table className="min-w-full divide-y divide-gray-200 border-collapse w-full">
-        <thead className="bg-gray-50">
+    <div className="overflow-x-auto relative shadow-md sm:rounded-lg">
+      <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+        <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
           <tr>
             {columns.map((column) => (
-              <th
-                key={column.key}
-                scope="col"
-                className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-              >
+              <th key={column.key} scope="col" className="py-3 px-6">
                 {column.label}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {data && data.length > 0 ? (
+        <tbody>
+          {data && Array.isArray(data) && data.length > 0 ? (
             data.map((row, index) => (
-              <tr key={index}>
+              <tr
+                key={index}
+                className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+              >
                 {columns.map((column) => (
-                  <td
-                    key={column.key}
-                    className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 "
-                  >
-                    {row[column.key]}
+                  <td key={`${index}-${column.key}`} className="py-4 px-6">
+                    {column.render
+                      ? column.render(row[column.key], row)
+                      : row[column.key]}
                   </td>
                 ))}
               </tr>
@@ -36,7 +35,7 @@ function Table({ columns, data, emptyMessage = "No data available" }) {
             <tr>
               <td
                 colSpan={columns.length}
-                className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 text-center"
+                className="py-4 px-6 text-center text-gray-600 dark:text-gray-300"
               >
                 {emptyMessage}
               </td>
@@ -47,5 +46,17 @@ function Table({ columns, data, emptyMessage = "No data available" }) {
     </div>
   );
 }
+
+Table.propTypes = {
+  columns: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      key: PropTypes.string.isRequired,
+      render: PropTypes.func,
+    })
+  ).isRequired,
+  data: PropTypes.array,
+  emptyMessage: PropTypes.string,
+};
 
 export default Table;
