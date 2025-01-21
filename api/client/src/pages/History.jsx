@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+// client/src/pages/History.jsx
+import React, { useEffect } from "react";
 import Table from "../components/ui/Table";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchHistory, generateDownloadUrl } from "../redux/user/historySlice";
@@ -6,11 +7,12 @@ import Button from "../components/ui/Button";
 import { API_URL } from "../util/config";
 import { toast } from "react-toastify";
 import { FaWhatsapp, FaEnvelope } from "react-icons/fa";
+import AudioPlayer from "../components/ui/AudioPlayer.jsx";
 
 function History() {
   const dispatch = useDispatch();
   const { history, loading, error } = useSelector((state) => state.history);
-  const { user } = useSelector((state) => state.user);
+  const { currentUser } = useSelector((state) => state.user);
 
   const columns = [
     { label: "Text", key: "originalText" },
@@ -29,12 +31,7 @@ function History() {
       key: "audioFileUrl",
       render: (audioFileUrl, row) => (
         <div className="flex gap-2">
-          <Button
-            onClick={() => handleDownload(audioFileUrl, row.id)}
-            size="small"
-          >
-            Download
-          </Button>
+          {audioFileUrl && <AudioPlayer audioUrl={audioFileUrl} />}
           <Button onClick={() => handleShare(row.id)} size="small">
             Share
           </Button>
@@ -54,7 +51,7 @@ function History() {
 
   useEffect(() => {
     dispatch(fetchHistory());
-  }, [dispatch, user]);
+  }, [dispatch, currentUser]);
 
   const handleWhatsAppShare = async (audioFileUrl) => {
     const message = `Check out this audio file: ${window.location.origin}${audioFileUrl}`;
@@ -78,7 +75,7 @@ function History() {
       const res = await fetch(`${API_URL}/user/getusers`, {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${user.token}`,
+          Authorization: `Bearer ${currentUser.token}`,
         },
       });
       const data = await res.json();
@@ -92,7 +89,7 @@ function History() {
       const response = await fetch(`${API_URL}/audio/share/${audioId}`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${user.token}`,
+          Authorization: `Bearer ${currentUser.token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ userId: foundUser._id }),
@@ -104,21 +101,6 @@ function History() {
       toast.success(responseData.message);
     } catch (error) {
       toast.error("Error sharing audio");
-    }
-  };
-
-  const handleDownload = async (audioFileUrl) => {
-    try {
-      const filename = audioFileUrl.split("/").pop();
-      const url = await dispatch(generateDownloadUrl(filename)).unwrap();
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.log("Error on download", error);
     }
   };
 
