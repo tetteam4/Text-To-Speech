@@ -26,7 +26,7 @@ export const fetchHistory = createAsyncThunk(
     }
   }
 );
-console.log("VITE_BASE_URL:", import.meta.env.VITE_BASE_URL);
+// console.log("VITE_BASE_URL:", import.meta.env.VITE_BASE_URL);
 
 export const saveHistory = createAsyncThunk(
   "history/saveHistory",

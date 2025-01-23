@@ -10,6 +10,7 @@ export default function SignUp() {
     email: "",
     password:""
   });
+
   const [errorMessage, setErrorMessage] = useState(null);
   const [loading, setLoding] = useState(false);
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ export default function SignUp() {
     setFormData({ ...formData, [e.target.id]: e.target.value.trim() });
   };
 
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.username || !formData.email || !formData.password) {
