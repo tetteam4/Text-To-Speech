@@ -15,7 +15,6 @@ import {
 import { CloudArrowUpIcon } from "@heroicons/react/24/solid";
 import * as pdfjsLib from "pdfjs-dist/build/pdf";
 import mammoth from "mammoth";
-import axios from "axios";
 import { saveHistory } from "../redux/user/historySlice.js";
 
 function TextToSpeech() {
@@ -49,10 +48,15 @@ function TextToSpeech() {
     loading: voicesLoading,
     error,
     audioUrl,
+    text,
   } = useSelector((state) => {
     console.log("Redux state:", state.speech);
     return state.speech;
   });
+
+  useEffect(() => {
+    setLocalText(text);
+  }, [text]);
 
   useEffect(() => {
     dispatch(fetchVoices());
@@ -60,7 +64,6 @@ function TextToSpeech() {
 
   const handleTextChange = (newText) => {
     dispatch(setText(newText));
-    setLocalText(newText);
   };
 
   const handleFileChange = async (event) => {
@@ -88,8 +91,7 @@ function TextToSpeech() {
         );
         return;
       }
-      dispatch(setText(extractedText)); // Update Redux state
-      setLocalText(extractedText); // Update local state
+      dispatch(setText(extractedText));
     } catch (error) {
       console.error("Error extracting text:", error);
     }
@@ -100,7 +102,7 @@ function TextToSpeech() {
       const reader = new FileReader();
       reader.onload = (e) => resolve(e.target.result);
       reader.onerror = (e) => reject(e);
-      reader.readAsText(file);
+      reader.readAsText(file, "UTF-8");
     });
   };
 
@@ -168,48 +170,6 @@ function TextToSpeech() {
   const handleVoiceTypeSelect = (type) => {
     setVoiceType(type);
   };
-
-  // const handleGenerateSpeech = async () => {
-  //   setIsGenerating(true);
-  //   try {
-  //     if (
-  //       currentLanguage &&
-  //       currentLanguage.languageCode &&
-  //       currentLanguage.option
-  //     ) {
-  //       let processedText = localText;
-  //       if (selectedPause !== "0s") {
-  //         const sentences = localText.split(/[\n\r]+|\.\s+/).filter(Boolean);
-  //         processedText = sentences.join(` <break time="${selectedPause}"/> `);
-  //       }
-  //       const generatedAudioUrl = await dispatch(
-  //         generateSpeech({
-  //           text: processedText,
-  //           lang: currentLanguage.languageCode,
-  //           option: currentLanguage.option,
-  //           rate: rate / 100,
-  //           pitch,
-  //           volume: volume / 100,
-  //           format,
-  //         })
-  //       ).unwrap();
-  //       if (generatedAudioUrl) {
-  //         await axios.post("http://localhost:5000/api/history/save", {
-  //           text: localText,
-  //           audioUrl: generatedAudioUrl,
-  //         });
-  //       }
-  //     } else {
-  //       console.error(
-  //         "Error: currentLanguage is undefined or does not have all the necessary data"
-  //       );
-  //     }
-  //   } catch (error) {
-  //     console.error("Error generating speech:", error);
-  //   } finally {
-  //     setIsGenerating(false);
-  //   }
-  // };
   const handleGenerateSpeech = async () => {
     setIsGenerating(true);
     try {
@@ -241,7 +201,6 @@ function TextToSpeech() {
             voiceSettings: currentLanguage,
           };
           await dispatch(saveHistory(audioData)).unwrap();
-     
         }
       } else {
         console.error(
@@ -272,11 +231,10 @@ function TextToSpeech() {
 
   const handleClearText = () => {
     dispatch(setText(""));
-    setLocalText("");
     setFileInputKey(Date.now());
     dispatch(setAudioUrl(null));
   };
-  
+
   const resetVoiceSettings = () => {
     setRate(0);
     setPitch(0);

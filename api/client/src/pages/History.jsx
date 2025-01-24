@@ -10,6 +10,8 @@ import {
   FaTrash,
   FaDownload,
   FaEye,
+  FaWhatsapp,
+  FaEnvelope,
 } from "react-icons/fa";
 import { useLocation } from "react-router-dom";
 import Modal from "../components/ui/Modal";
@@ -62,6 +64,12 @@ function History() {
       ...prev,
       [audioId]: !prev[audioId],
     }));
+  };
+  const handleWhatsAppShareDemo = () => {
+    toast.info("WhatsApp share demo");
+  };
+  const handleEmailShareDemo = () => {
+    toast.info("Email share demo");
   };
   const handleDeleteAudio = async (audioId) => {
     if (!window.confirm("Are you sure you want to delete this audio?")) {
@@ -257,6 +265,18 @@ function History() {
                       </Button>
                       {shareDropdownOpen[row.id] && (
                         <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-md z-10 dark:bg-gray-700 dark:border-gray-600">
+                          <button
+                            className="block w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-white flex items-center gap-2"
+                            onClick={() => handleWhatsAppShareDemo()}
+                          >
+                            <FaWhatsapp /> Share via WhatsApp
+                          </button>
+                          <button
+                            className="block w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-white flex items-center gap-2"
+                            onClick={() => handleEmailShareDemo()}
+                          >
+                            <FaEnvelope /> Share via Email
+                          </button>
                           <button
                             className="block w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-white"
                             onClick={() =>
