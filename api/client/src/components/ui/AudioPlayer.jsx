@@ -55,7 +55,6 @@ function AudioPlayer({ audioUrl }) {
     }
   };
 
-  
   const handleVolumeChange = (newVolume) => {
     if (audioRef.current) {
       audioRef.current.volume = newVolume;
@@ -131,7 +130,7 @@ function AudioPlayer({ audioUrl }) {
           {formatTime(currentTime)} / {formatTime(duration)}
         </div>
       </div>
-      <div className="flex items-center">
+      <div className="mt-4">
         <Slider
           value={progress}
           onChange={handleSeek}
