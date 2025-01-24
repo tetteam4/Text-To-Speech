@@ -11,15 +11,12 @@ export const fetchHistory = createAsyncThunk(
   "history/fetchHistory",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(
-        `/api/audio/history`,
-        {
-          withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
+      const response = await axios.get(`/api/audio/history`, {
+        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.message || "Error fetching history");
@@ -45,6 +42,22 @@ export const saveHistory = createAsyncThunk(
   }
 );
 
+export const deleteAudioHistory = createAsyncThunk(
+  "history/deleteAudioHistory",
+  async (audioId, { rejectWithValue }) => {
+    try {
+      await axios.delete(`/api/audio/delete/${audioId}`, {
+        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      return audioId;
+    } catch (error) {
+      return rejectWithValue(error.message || "Error deleting audio history");
+    }
+  }
+);
 export const generateDownloadUrl = createAsyncThunk(
   "history/generateDownloadUrl",
   async (filename, { rejectWithValue }) => {
@@ -100,6 +113,20 @@ const HistorySlice = createSlice({
         state.loading = false;
       })
       .addCase(saveHistory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(deleteAudioHistory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteAudioHistory.fulfilled, (state, action) => {
+        state.loading = false;
+        state.history = state.history.filter(
+          (item) => item.id !== action.payload
+        );
+      })
+      .addCase(deleteAudioHistory.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

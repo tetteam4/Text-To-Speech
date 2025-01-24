@@ -25,7 +25,11 @@ export const getAudioHistory = async (req, res, next) => {
     const history = await AudioHistory.find({ userId: req.user.id }).sort({
       createdAt: "desc",
     });
-    res.status(200).json(history);
+    const data = history.map((item) => ({
+      ...item.toObject(),
+      id: item._id,
+    }));
+    res.status(200).json(data);
   } catch (error) {
     next(error);
   }
@@ -48,6 +52,23 @@ export const shareAudio = async (req, res, next) => {
     } else {
       return next(errorHandler(401, "not exist"));
     }
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteAudioHistory = async (req, res, next) => {
+  try {
+    const audioId = req.params.audioId;
+    const audio = await AudioHistory.findById(audioId);
+    if (!audio) {
+      return next(errorHandler(404, "audio not found"));
+    }
+    if (audio.userId.toString() !== req.user.id) {
+      return next(errorHandler(403, "Unauthorized to delete this record"));
+    }
+    await AudioHistory.findByIdAndDelete(audioId);
+    res.status(200).json({ message: "Audio deleted succesfully" });
   } catch (error) {
     next(error);
   }
