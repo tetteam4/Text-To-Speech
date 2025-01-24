@@ -4,6 +4,8 @@ import InputText from "../components/ui/InputText";
 import Dropdown from "../components/ui/Dropdown";
 import FeaturesSection from "../components/FeaturesSection";
 import { motion } from "framer-motion";
+import TestimonialsSection from "../components/TestimonialsSection";
+import FAQSection from "../components/FAQSection";
 
 function Home() {
   const [text, setText] = useState("");
@@ -153,6 +155,8 @@ function Home() {
         </div>
       </motion.div>
       <FeaturesSection />
+      <TestimonialsSection />
+      <FAQSection />
     </motion.div>
   );
 }
