@@ -21,6 +21,7 @@ import {
 function Home() {
   const [localText, setLocalText] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [animatedText, setAnimatedText] = useState("");
 
   const dispatch = useDispatch();
   const {
@@ -46,7 +47,7 @@ function Home() {
   const handleTextChange = (newText) => {
     dispatch(setText(newText));
     setLocalText(newText);
-    dispatch(setAudioUrl(null)); //remove the audio if the text is changing
+    dispatch(setAudioUrl(null));
     dispatch(setIsPlaying(false));
   };
 
@@ -90,6 +91,7 @@ function Home() {
 
   const headingRef = useRef(null);
   const buttonRef = useRef(null);
+  const paragraphRef = useRef(null); // useRef for the animation
 
   useEffect(() => {
     const headingText = "Instantly Convert Text to Voice with AI";
@@ -174,9 +176,36 @@ function Home() {
     transition: { duration: 0.5 },
   };
 
+  const button3dVariants = {
+    initial: { opacity: 0, scale: 0.8, z: -50, rotateY: -20 },
+    animate: {
+      opacity: 1,
+      scale: 1,
+      z: 0,
+      rotateY: 0,
+      transition: { duration: 0.3, ease: "easeOut" },
+    },
+  };
+  const descriptionText =
+    "TET TTS App is a free online text-to-speech (TTS) tool that turns your text into natural-sounding speech. We offer a wide range of AI Voices. Simply input your text, choose a voice, and either download the resulting mp3 file or listen to it directly. Perfect for content creators, students, or anyone needing text read aloud.";
+
+  useEffect(() => {
+    let currentText = "";
+    const animateText = async () => {
+      for (const char of descriptionText) {
+        currentText += char;
+        setAnimatedText(currentText);
+        await new Promise((resolve) => setTimeout(resolve, 0.5));
+      }
+    };
+    if (paragraphRef.current) {
+      animateText();
+    }
+  }, [descriptionText]);
+
   return (
     <motion.div
-      className="p-6 mt-20"
+      className="p-6 mt-10"
       variants={pageVariants}
       initial="initial"
       animate="animate"
@@ -191,16 +220,15 @@ function Home() {
           style={{ height: "80px", marginBottom: "1.5rem" }}
         ></div>
         <motion.p
-          className="text-gray-600 dark:text-gray-300 mb-6"
-          variants={fadeIn}
+          className="text-gray-600 dark:text-gray-300 mb-6 "
+          ref={paragraphRef}
         >
-          TET TTS App is a free online text-to-speech (TTS) tool that turns your
-          text into natural-sounding speech. We offer a wide range of AI Voices.
-          Simply input your text, choose a voice, and either download the
-          resulting mp3 file or listen to it directly. Perfect for content
-          creators, students, or anyone needing text read aloud.
+          {animatedText}
         </motion.p>
-        <motion.div className="flex items-center justify-center gap-4">
+        <motion.div
+          className="flex items-center justify-center gap-4"
+          variants={button3dVariants}
+        >
           <Button
             ref={buttonRef}
             variant="primary"

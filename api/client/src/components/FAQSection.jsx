@@ -1,9 +1,11 @@
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useState, useRef } from "react";
+import { motion, AnimatePresence, useInView } from "framer-motion";
 import { FaPlus, FaMinus } from "react-icons/fa";
 
 function FAQSection() {
   const [activeIndex, setActiveIndex] = useState(null);
+  const faqRef = useRef(null);
+  const inView = useInView(faqRef, { once: true });
 
   const faqItems = [
     {
@@ -50,16 +52,30 @@ function FAQSection() {
         "This might be because of the document itself, the pdf parser might not be able to extract the text. Please check your PDF document, or try uploading a text or a docx file.",
     },
   ];
-
+  const headingVariants = {
+    initial: { opacity: 0, y: -10 },
+    animate: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.3, ease: "easeOut" },
+    },
+  };
   const toggleAccordion = (index) => {
     setActiveIndex(activeIndex === index ? null : index);
   };
-
+  const accordionVariants = {
+    open: { height: "auto", opacity: 1 },
+    closed: { height: 0, opacity: 0 },
+  };
   return (
-    <div className="max-w-4xl mx-auto mb-10">
-      <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-4 text-center">
+    <motion.div className="max-w-4xl mx-auto mb-10" ref={faqRef}>
+      <motion.h2
+        className="text-2xl font-semibold text-gray-800 dark:text-white mb-4 text-center"
+        variants={headingVariants}
+        animate={inView ? "animate" : "initial"}
+      >
         Frequently Asked Questions
-      </h2>
+      </motion.h2>
       {faqItems.map((item, index) => (
         <motion.div
           key={index}
@@ -84,10 +100,11 @@ function FAQSection() {
             {activeIndex === index && (
               <motion.div
                 className="px-4 py-2 text-gray-600 dark:text-gray-400"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
+                variants={accordionVariants}
+                initial="closed"
+                animate="open"
+                exit="closed"
+                transition={{ duration: 0.3, ease: "easeOut" }}
               >
                 {item.answer}
               </motion.div>
@@ -95,7 +112,7 @@ function FAQSection() {
           </AnimatePresence>
         </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 }
 export default FAQSection;
