@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   PlayIcon,
   PauseIcon,
@@ -6,15 +6,31 @@ import {
   SpeakerXMarkIcon,
 } from "@heroicons/react/24/solid";
 import Slider from "./Slider";
+import { useDispatch, useSelector } from "react-redux";
+import { setIsPlaying } from "../../redux/user/speechSlice"; // Import the action
 
 function AudioPlayer({ audioUrl }) {
   const audioRef = useRef(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(1);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [progress, setProgress] = useState(0);
+  const dispatch = useDispatch();
+  const { isPlaying } = useSelector((state) => state.speech); // Get isPlaying from Redux
+  const [isAudioPaused, setIsAudioPaused] = useState(true);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.play();
+        setIsAudioPaused(false);
+      } else {
+        audioRef.current.pause();
+        setIsAudioPaused(true);
+      }
+    }
+  }, [isPlaying]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -29,7 +45,7 @@ function AudioPlayer({ audioUrl }) {
       };
 
       const handleEnded = () => {
-        setIsPlaying(false);
+        dispatch(setIsPlaying(false));
       };
 
       audio.addEventListener("loadedmetadata", handleLoadedMetadata);
@@ -42,16 +58,18 @@ function AudioPlayer({ audioUrl }) {
         audio.removeEventListener("ended", handleEnded);
       };
     }
-  }, [audioUrl, audioRef]);
+  }, [audioUrl, audioRef, dispatch]);
 
   const handlePlayPause = () => {
     if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
+      if (isAudioPaused) {
         audioRef.current.play();
+        dispatch(setIsPlaying(true));
+      } else {
+        audioRef.current.pause();
+        dispatch(setIsPlaying(false));
       }
-      setIsPlaying(!isPlaying);
+      setIsAudioPaused(!isAudioPaused);
     }
   };
 
@@ -87,59 +105,64 @@ function AudioPlayer({ audioUrl }) {
   };
 
   return (
-    <div className="bg-white rounded p-4 shadow-md dark:bg-gray-800">
-      <audio ref={audioRef} src={audioUrl} />
+    <div className="mt-4 overflow-hidden max-w-full">
+      <div className="max-w-full max-h-24 overflow-hidden ">
+        <audio ref={audioRef} src={audioUrl} style={{ width: "100%" }} />
+      </div>
+      {audioUrl && (
+        <div className="bg-white rounded p-4 shadow-md dark:bg-gray-800">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center">
+              <button
+                onClick={handlePlayPause}
+                className="text-gray-700 dark:text-gray-300 focus:outline-none"
+              >
+                {isAudioPaused ? (
+                  <PlayIcon className="h-6 w-6" />
+                ) : (
+                  <PauseIcon className="h-6 w-6" />
+                )}
+              </button>
 
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center">
-          <button
-            onClick={handlePlayPause}
-            className="text-gray-700 dark:text-gray-300 focus:outline-none"
-          >
-            {isPlaying ? (
-              <PauseIcon className="h-6 w-6" />
-            ) : (
-              <PlayIcon className="h-6 w-6" />
-            )}
-          </button>
-
-          <button
-            onClick={toggleMute}
-            className="ml-2 text-gray-700 dark:text-gray-300 focus:outline-none"
-          >
-            {isMuted ? (
-              <SpeakerXMarkIcon className="h-6 w-6" />
-            ) : (
-              <SpeakerWaveIcon className="h-6 w-6" />
-            )}
-          </button>
-          <div className="ml-4 flex items-center space-x-2 w-40">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Volume:
-            </label>
+              <button
+                onClick={toggleMute}
+                className="ml-2 text-gray-700 dark:text-gray-300 focus:outline-none"
+              >
+                {isMuted ? (
+                  <SpeakerXMarkIcon className="h-6 w-6" />
+                ) : (
+                  <SpeakerWaveIcon className="h-6 w-6" />
+                )}
+              </button>
+              <div className="ml-4 flex items-center space-x-2 w-40">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Volume:
+                </label>
+                <Slider
+                  value={volume}
+                  onChange={handleVolumeChange}
+                  min={0}
+                  max={1}
+                  step={0.1}
+                />
+              </div>
+            </div>
+            <div className="text-gray-700 dark:text-gray-300">
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </div>
+          </div>
+          <div className="mt-4">
             <Slider
-              value={volume}
-              onChange={handleVolumeChange}
+              value={progress}
+              onChange={handleSeek}
               min={0}
-              max={1}
-              step={0.1}
+              max={100}
+              step={1}
+              className="w-full"
             />
           </div>
         </div>
-        <div className="text-gray-700 dark:text-gray-300">
-          {formatTime(currentTime)} / {formatTime(duration)}
-        </div>
-      </div>
-      <div className="mt-4">
-        <Slider
-          value={progress}
-          onChange={handleSeek}
-          min={0}
-          max={100}
-          step={1}
-          className="w-full"
-        />
-      </div>
+      )}
     </div>
   );
 }

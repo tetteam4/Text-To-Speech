@@ -8,6 +8,7 @@ const initialState = {
   audioUrl: null,
   loading: false,
   error: null,
+  isPlaying: false, // Added isPlaying state
 };
 
 const edenApiKey =
@@ -133,6 +134,11 @@ const SpeechSlice = createSlice({
     },
     setText: (state, action) => {
       state.text = action.payload;
+      state.audioUrl = null; // Clear the audio URL when the text is changed
+    },
+    setIsPlaying: (state, action) => {
+      // Added setIsPlaying reducer
+      state.isPlaying = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -187,5 +193,6 @@ export const {
   setText,
   setLoading,
   setError,
+  setIsPlaying, // Added setIsPlaying action export
 } = SpeechSlice.actions;
 export default SpeechSlice.reducer;
