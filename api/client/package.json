@@ -21,6 +21,7 @@
     "axios": "^1.7.9",
     "axois": "^0.0.1-security",
     "comment": "^0.0.2",
+    "d3": "^7.9.0",
     "dotenv": "^16.4.7",
     "final-projects-blog": "file:..",
     "firebase": "^10.12.0",
