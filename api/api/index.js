@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import userRoutes from "./routes/user.route.js";
 import authRoutes from "./routes/auth.route.js";
 import audioRoutes from "./routes/audio.route.js";
+import audioMessageRoutes from "./routes/audioMessage.route.js";
 import cookieParser from "cookie-parser";
 
 import path from "path";
@@ -41,7 +42,7 @@ app.listen(3000, () => {
 app.use("/api/user", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/audio", audioRoutes);
-// app.use("/api/speech", speechRoutes);
+ app.use("/api/audioMessage", audioMessageRoutes);
 
 app.use(express.static(path.join(__dirname, "/client/dist")));
 

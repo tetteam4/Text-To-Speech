@@ -20,7 +20,6 @@ export const signup = async (req, res, next) => {
   ) {
     next(errorHandler(400, "همه فیلدها الزامی است"));
   }
-  // 10 is roound maxer
   const hashedPassword = bcrypt.hashSync(password, 12);
   const newUser = new User({
     username: username,

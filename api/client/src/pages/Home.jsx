@@ -24,18 +24,8 @@ function Home() {
   const [animatedText, setAnimatedText] = useState("");
 
   const dispatch = useDispatch();
-  const {
-    voices,
-    currentLanguage,
-    loading: voicesLoading,
-    error,
-    audioUrl,
-    text,
-    isPlaying,
-  } = useSelector((state) => {
-    console.log("Redux state:", state.speech);
-    return state.speech;
-  });
+  const {voices,currentLanguage,loading: voicesLoading,error, audioUrl,text,isPlaying, } = useSelector((state) => { return state.speech;});
+
   useEffect(() => {
     setLocalText(text);
   }, [text]);

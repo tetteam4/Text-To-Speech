@@ -6,46 +6,79 @@ export const test = (req, res) => {
   res.json({ message: "API is working!" });
 };
 
-export const updateUsers = async (req, res) => {
-  const { username, email, password, profilePicture} = req.body;
-  const { id } = req.params;
+// export const updateUsers = async (req, res) => {
+//   const { username, email, password, profilePicture} = req.body;
+//   const { id } = req.params;
 
-  if (!password) {
-    return res.status(400).json({ message: "Password is required" });
-  }
+//   if (!password) {
+//     return res.status(400).json({ message: "Password is required" });
+//   }
 
-  const hashed = bcryptjs.hashSync(password, 10);
-  // Check if the user exists in the User table
-  let user = await User.findById(id);
-  if (user) {
-    // Update the User table
-    user = await User.findByIdAndUpdate(
-      id,
-      {
-        $set: {
-          username,
-          email,
-          password: hashed,
-          profilePicture,
-        },
-      },
-      { new: true }
-    );
-    const { password: pas, ...rest } = user._doc;
-    return res.json(rest);
-  } else {
-      // User not found in either table
-      return res.status(404).json({ message: "User not found" });
-    }
+//   const hashed = bcryptjs.hashSync(password, 10);
+//   // Check if the user exists in the User table
+//   let user = await User.findById(id);
+//   if (user) {
+//     // Update the User table
+//     user = await User.findByIdAndUpdate(
+//       id,
+//       {
+//         $set: {
+//           username,
+//           email,
+//           password: hashed,
+//           profilePicture,
+//         },
+//       },
+//       { new: true }
+//     );
+//     const { password: pas, ...rest } = user._doc;
+//     return res.json(rest);
+//   } else {
+//       // User not found in either table
+//       return res.status(404).json({ message: "User not found" });
+//     }
   
-};
+// };
 
 
 
 
 
 ////////////////  Delete controler
+  export const updateUsers = async (req, res) => {
+    const { username, email, password, profilePicture, activeForAudio } =
+      req.body;
+    const { id } = req.params;
 
+    if (!password) {
+      return res.status(400).json({ message: "Password is required" });
+    }
+
+    const hashed = bcryptjs.hashSync(password, 10);
+    // Check if the user exists in the User table
+    let user = await User.findById(id);
+    if (user) {
+      // Update the User table
+      user = await User.findByIdAndUpdate(
+        id,
+        {
+          $set: {
+            username,
+            email,
+            password: hashed,
+            profilePicture,
+            activeForAudio,
+          },
+        },
+        { new: true }
+      );
+      const { password: pas, ...rest } = user._doc;
+      return res.json(rest);
+    } else {
+      // User not found in either table
+      return res.status(404).json({ message: "User not found" });
+    }
+  };
 export const deleteUser = async (req, res, next) => {
   if (!req.user.isAdmin &&req.user.id !== req.params.userId) {
     return next( errorHandler(403, "نمی توانید این حساب هذف نماید"));

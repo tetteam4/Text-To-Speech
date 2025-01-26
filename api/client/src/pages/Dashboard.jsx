@@ -7,6 +7,7 @@ import History from "./History";
 import TextToSpeech from "./TextToSpeech";
 import FileToSpeech from "./FileToSpeech";
 import DashboardComp from "../components/DashboardComp";
+import AudioMessage from "../components/ui/AudioMessage";
 
 export default function Dashboard() {
     const location = useLocation();
@@ -24,30 +25,36 @@ export default function Dashboard() {
         setIsSidebarOpen(!isSidebarOpen);
     };
     return (
+      <div
+        className={`min-h-screen grid  md:grid-cols-[auto_1fr] ${
+          isSidebarOpen ? "lg:grid-cols-[auto_1fr]" : "grid-cols-[auto_1fr]"
+        }`}
+      >
+        {/* Sidebar */}
         <div
-            className={`min-h-screen grid  md:grid-cols-[auto_1fr] ${
-                isSidebarOpen ? "lg:grid-cols-[auto_1fr]" : "grid-cols-[auto_1fr]"
-            }`}
-        >
-            {/* Sidebar */}
-            <div
-                className={`relative md:block  transition-all duration-300 pt-8
+          className={`relative md:block  transition-all duration-300 pt-8
                         ${isSidebarOpen ? "md:w-56 lg:w-56" : "md:w-16 lg:w-16"}
                           dark:bg-gray-900/100
                      `}
-            >
-                <DashSidebar  toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
-            </div>
-            {/* Main Content */}
-            <div onClick={() => setIsSidebarOpen(false)} className="flex-grow p-4 md:p-6 lg:p-8 w-full pt-16   ">
-                {tab === "profile"        && <DashProfile />}
-                {tab === "history"        && <History />}
-                {tab === "users"          && <DashUsers />}
-                {tab === "text-to-speech" && <TextToSpeech />}
-                {tab === "dash"           && <DashboardComp />}
-                {tab === "file-to-speech" && <FileToSpeech />}
-
-            </div>
+        >
+          <DashSidebar
+            toggleSidebar={toggleSidebar}
+            isSidebarOpen={isSidebarOpen}
+          />
         </div>
+        {/* Main Content */}
+        <div
+          onClick={() => setIsSidebarOpen(false)}
+          className="flex-grow p-4 md:p-6 lg:p-8 w-full pt-16   "
+        >
+          {tab === "profile" && <DashProfile />}
+          {tab === "history" && <History />}
+          {tab === "users" && <DashUsers />}
+          {tab === "text-to-speech" && <TextToSpeech />}
+          {tab === "audio-message" && <AudioMessage />}
+          {tab === "dash" && <DashboardComp />}
+          {tab === "file-to-speech" && <FileToSpeech />}
+        </div>
+      </div>
     );
 }

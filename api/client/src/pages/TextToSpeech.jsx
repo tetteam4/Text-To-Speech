@@ -410,7 +410,7 @@ function TextToSpeech() {
         {error && <p className="dark:text-red-300">Error: {error}</p>}
         {audioUrl && <AudioPlayer audioUrl={audioUrl} />}
         {audioUrl && (
-          <div className="mt-4">
+          <div className="mt-4 justify-start ml-24">
             <Button
               onClick={handleDownloadAudio}
               className="dark:text-white dark:bg-fave dark:hover:bg-[#6c20f3] text-white hover:bg-[#08a8db]"

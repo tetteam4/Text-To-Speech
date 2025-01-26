@@ -105,7 +105,7 @@ function AudioPlayer({ audioUrl }) {
   };
 
   return (
-    <div className="mt-4 overflow-hidden max-w-full">
+    <div className="mt-4 overflow-hidden max-w-6xl mx-auto">
       <div className="max-w-full max-h-24 overflow-hidden ">
         <audio ref={audioRef} src={audioUrl} style={{ width: "100%" }} />
       </div>
