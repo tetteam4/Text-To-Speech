@@ -41,24 +41,54 @@ export const getAudioMessages = async (req, res, next) => {
   }
 };
 
-export const markMessageAsRead = async (req, res, next) => {
-  const { messageId } = req.params;
-  try {
-    const message = await AudioMessage.findById(messageId);
-    if (!message) return next(errorHandler(404, "message not found"));
-    if (message.receiverId.toString() !== req.user.id)
-      return next(errorHandler(403, "you are not auth to edit"));
+// export const markMessageAsRead = async (req, res, next) => {
+//   const { messageId } = req.params;
+//   try {
+//     const message = await AudioMessage.findById(messageId);
+//     if (!message) return next(errorHandler(404, "message not found"));
+//     if (message.receiverId.toString() !== req.user.id)
+//       return next(errorHandler(403, "you are not auth to edit"));
 
-    const updatedMessage = await AudioMessage.findByIdAndUpdate(
-      messageId,
-      { isSeen: true },
-      { new: true }
-    );
+//     const updatedMessage = await AudioMessage.findByIdAndUpdate(
+//       messageId,
+//       { isSeen: true },
+//       { new: true }
+//     );
 
-    res
-      .status(200)
-      .json({ message: " message read successfully", updatedMessage });
-  } catch (error) {
-    next(error);
-  }
-};
+//     res
+//       .status(200)
+//       .json({ message: " message read successfully", updatedMessage });
+//   } catch (error) {
+//     next(error);
+//   }
+// };
+   // backend/controlers/audioMessage.controller.js
+     export const deliveredMessage = async (req, res, next) => {
+           const { messageId } = req.params;
+           try {
+                 const message = await AudioMessage.findById(messageId);
+                if(!message) return next (errorHandler(404,"message not found"));
+                   if(message.receiverId.toString()!==req.user.id) return next (errorHandler(403,"you are not auth to edit"))
+
+                  const updatedMessage =  await AudioMessage.findByIdAndUpdate(messageId, {status:'delivered'}, {new:true});
+
+                 res.status(200).json({message:' message delivered successfully', updatedMessage})
+             } catch (error) {
+                  next(error);
+             }
+       };
+      export const markMessageAsRead = async (req, res, next) => {
+         const { messageId } = req.params;
+           try {
+                 const message = await AudioMessage.findById(messageId);
+                  if(!message) return next (errorHandler(404,"message not found"));
+                  if(message.receiverId.toString()!==req.user.id) return next (errorHandler(403,"you are not auth to edit"))
+
+                 const updatedMessage =  await AudioMessage.findByIdAndUpdate(messageId, {status:'read', isSeen:true}, {new:true});
+
+               res.status(200).json({message:' message read successfully', updatedMessage})
+             } catch (error) {
+                 next(error);
+             }
+}
+       

@@ -21,6 +21,11 @@ const audioMessageSchema = new mongoose.Schema(
     message: {
       type: String,
     },
+    status: {
+      type: String,
+      enum: ["sent", "delivered", "read"],
+      default: "sent",
+    },
     isSeen: {
       type: Boolean,
       default: false,

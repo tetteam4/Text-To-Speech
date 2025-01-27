@@ -46,7 +46,8 @@
     "react-toastify": "^11.0.3",
     "redux-persist": "^6.0.0",
     "swiper": "^11.2.1",
-    "tailwind-scrollbar-hide": "^2.0.0"
+    "tailwind-scrollbar-hide": "^2.0.0",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@tailwindcss/line-clamp": "^0.4.4",
