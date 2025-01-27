@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   fetchAudioMessages,
   clearMessages,
+  updateMessageState,
 } from "../../redux/user/audioMessageSlice";
 import { Link } from "react-router-dom";
 import socket from "../../socket";
@@ -67,7 +68,6 @@ function ConversationsList() {
       socket.off("disconnect");
     };
   }, [currentUser._id]);
-
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     let hours = date.getHours();
@@ -86,7 +86,6 @@ function ConversationsList() {
 
   useEffect(() => {
     const groupedMessages = {};
-
     if (messages) {
       messages.forEach((message) => {
         const otherUserId =
@@ -108,10 +107,48 @@ function ConversationsList() {
           groupedMessages[otherUserId].userInfo = null;
         }
       });
-
       setConversations(groupedMessages);
     }
   }, [messages, currentUser, fetchLastSeen]);
+
+  useEffect(() => {
+    socket.on("receive_message", (message) => {
+      setConversations((prev) => {
+        const otherUserId =
+          message.senderId._id === currentUser._id
+            ? message.receiverId._id
+            : message.senderId._id;
+        if (prev[otherUserId]) {
+          return {
+            ...prev,
+            [otherUserId]: {
+              ...prev[otherUserId],
+              messages: [...prev[otherUserId].messages, message],
+              userInfo:
+                message.senderId._id !== currentUser._id
+                  ? message.senderId
+                  : null,
+            },
+          };
+        } else {
+          return {
+            ...prev,
+            [otherUserId]: {
+              messages: [message],
+              userInfo:
+                message.senderId._id !== currentUser._id
+                  ? message.senderId
+                  : null,
+            },
+          };
+        }
+      });
+    });
+
+    return () => {
+      socket.off("receive_message");
+    };
+  }, [currentUser._id, dispatch]);
 
   return (
     <div className="p-4 md:p-6 lg:p-8 w-full pt-16">

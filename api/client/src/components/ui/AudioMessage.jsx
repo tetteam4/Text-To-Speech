@@ -11,11 +11,18 @@ import {
 import { fetchHistory } from "../../redux/user/historySlice";
 import Button from "./Button";
 import { toast } from "react-toastify";
-import { FaPlay, FaPause, FaPaperclip } from "react-icons/fa";
+import {
+  FaPlay,
+  FaPause,
+  FaPaperclip,
+  FaMicrophone,
+  FaPaperPlane,
+} from "react-icons/fa";
 import socket from "../../socket";
 import ConversationsList from "../ui/ConversationsList";
 import { useLocation } from "react-router-dom";
 import InputText from "./InputText";
+import Dropdown from "./Dropdown";
 
 function AudioMessage() {
   const dispatch = useDispatch();
@@ -25,7 +32,7 @@ function AudioMessage() {
   const { currentUser } = useSelector((state) => state.user);
   const { history } = useSelector((state) => state.history);
   const [selectedReceiver, setSelectedReceiver] = useState("");
-  const [selectedAudioHistoryId, setSelectedAudioHistoryId] = useState(""); // Changed initial value to ""
+  const [selectedAudioHistoryId, setSelectedAudioHistoryId] = useState("");
   const [messageText, setMessageText] = useState("");
   const [playingAudioId, setPlayingAudioId] = useState(null);
   const audioRefs = useRef({});
@@ -35,6 +42,7 @@ function AudioMessage() {
   const [recordedAudio, setRecordedAudio] = useState(null);
   const audioRecorder = useRef(null);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [showHistoryDropdown, setShowHistoryDropdown] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -66,13 +74,12 @@ function AudioMessage() {
       setSelectedReceiver("");
     }
   }, [location, users]);
-
   const handleSendMessage = async () => {
     if (!selectedAudioHistoryId && !messageText && !recordedAudio)
       return toast.error("Please record audio or type a message");
     if (!selectedReceiver)
       return toast.error("Please select a user to send the message");
-    let audioHistoryId = selectedAudioHistoryId || null;
+    let audioHistoryId = selectedAudioHistoryId;
     let messageData = {
       receiverId: selectedReceiver,
       audioHistoryId: audioHistoryId,
@@ -104,8 +111,7 @@ function AudioMessage() {
     try {
       const message = await dispatch(createAudioMessage(messageData)).unwrap();
       dispatch(updateMessageState(message));
-
-      setSelectedAudioHistoryId(""); // reset select input
+      setSelectedAudioHistoryId("");
       setMessageText("");
       setRecordedAudio(null);
       toast.success("Message sent successfully");
@@ -206,12 +212,19 @@ function AudioMessage() {
       audioRecorder.current = null;
     }
   };
-
+  const toggleHistoryDropdown = () => {
+    setShowHistoryDropdown(!showHistoryDropdown);
+  };
+  const handleHistorySelect = (selected) => {
+    setSelectedAudioHistoryId(selected.id);
+    setShowHistoryDropdown(false);
+  };
   return (
     <div className="p-4 md:p-6 lg:p-8 w-full pt-16 flex flex-col md:flex-row gap-2">
       <div className="w-full md:w-1/4">
         <ConversationsList />
       </div>
+
       <div className="flex-grow flex flex-col  border rounded p-2 relative dark:bg-gray-900 dark:border-gray-700">
         {selectedUser && (
           <div className="p-3 flex gap-2 border-b border-gray-300 dark:border-gray-700">
@@ -228,7 +241,6 @@ function AudioMessage() {
             </div>
           </div>
         )}
-
         <div className="flex-grow overflow-y-auto h-[500px] scrollbar scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600">
           {messages &&
             messages.map((message) => (
@@ -315,7 +327,31 @@ function AudioMessage() {
               </div>
             ))}
         </div>
-        <div className="border-t border-gray-300 dark:border-gray-600 p-2 pt-4 flex gap-2">
+        <div className="border-t border-gray-300 dark:border-gray-600 p-2 pt-4 flex  items-center gap-2">
+          <div className="relative">
+            <Button
+              onClick={toggleHistoryDropdown}
+              size="small"
+              className="rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+            >
+              <FaPaperclip className="h-5 w-5" />
+            </Button>
+            {showHistoryDropdown && (
+              <div className="absolute left-0 mt-2 w-48 bg-white border rounded shadow-md z-20 dark:bg-gray-700 dark:border-gray-600">
+                {history.map((item) => (
+                  <button
+                    key={item.id}
+                    className="block w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-white"
+                    onClick={() => handleHistorySelect(item)}
+                  >
+                    {item.originalText.length > 30
+                      ? `${item.originalText.slice(0, 30)}...`
+                      : item.originalText}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           {recordedAudio && (
             <audio
               controls
@@ -323,52 +359,41 @@ function AudioMessage() {
               className="w-1/5"
             />
           )}
-          <div className="flex flex-col gap-2 w-3/5">
+          <div className="flex-grow">
             <InputText
-              placeholder="type your message"
+              placeholder="Type your message or record a voice note..."
               value={messageText}
               onTextChange={setMessageText}
+              style={{ height: "30px", borderRadius: "1.25rem" }}
             />
-            <select
-              id="audioHistoryId"
-              className=" py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:text-white"
-              value={selectedAudioHistoryId}
-              onChange={(e) => setSelectedAudioHistoryId(e.target.value)}
-            >
-              <option value="">Select from your history</option>
-              {history &&
-                history.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.originalText.length > 30
-                      ? `${item.originalText.slice(0, 30)}...`
-                      : item.originalText}
-                  </option>
-                ))}
-            </select>
           </div>
-          <div className="flex gap-1">
-            {!isRecording && (
-              <Button onClick={handleStartRecording} size="small">
-                Record
-              </Button>
-            )}
-            {isRecording && (
-              <Button onClick={handleStopRecording} size="small">
-                Stop
-              </Button>
-            )}
-
+          {!isRecording && (
+            <Button
+              onClick={handleStartRecording}
+              size="small"
+              className="rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+            >
+              <FaMicrophone className="h-5 w-5" />
+            </Button>
+          )}
+          {isRecording && (
+            <Button
+              onClick={handleStopRecording}
+              size="small"
+              className="rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+            >
+              Stop
+            </Button>
+          )}
+          {!isRecording && (
             <Button
               onClick={handleSendMessage}
-              disabled={
-                !selectedReceiver ||
-                (!selectedAudioHistoryId && !messageText && !recordedAudio)
-              }
               size="small"
+              className="rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
             >
-              Send
+              <FaPaperPlane className="h-5 w-5" />
             </Button>
-          </div>
+          )}
         </div>
       </div>
     </div>
