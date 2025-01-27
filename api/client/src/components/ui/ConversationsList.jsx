@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   fetchAudioMessages,
   clearMessages,
-  updateMessageState,
 } from "../../redux/user/audioMessageSlice";
 import { Link } from "react-router-dom";
 import socket from "../../socket";
@@ -14,9 +13,10 @@ function ConversationsList() {
     (state) => state.audioMessage
   );
   const { currentUser } = useSelector((state) => state.user);
-  const [conversations, setConversations] = useState({});
+  const [users, setUsers] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const lastSeenRef = useRef({}); // Using useRef here
+  const [conversations, setConversations] = useState({});
 
   const fetchLastSeen = useCallback(async (userId) => {
     try {
@@ -37,7 +37,6 @@ function ConversationsList() {
       console.log(error);
     }
   }, []);
-
   useEffect(() => {
     const fetchUsersOnline = async () => {
       try {
@@ -68,6 +67,7 @@ function ConversationsList() {
       socket.off("disconnect");
     };
   }, [currentUser._id]);
+
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     let hours = date.getHours();
@@ -83,9 +83,28 @@ function ConversationsList() {
   useEffect(() => {
     dispatch(fetchAudioMessages());
   }, [dispatch]);
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await fetch("/api/user/getusers");
+        const data = await res.json();
+        if (res.ok) {
+          setUsers(
+            data.users.filter(
+              (user) => user._id !== currentUser._id && user.activeForAudio
+            )
+          );
+        }
+      } catch (error) {
+        console.log(error.message);
+      }
+    };
 
+    fetchUsers();
+  }, [currentUser._id]);
   useEffect(() => {
     const groupedMessages = {};
+
     if (messages) {
       messages.forEach((message) => {
         const otherUserId =
@@ -113,17 +132,17 @@ function ConversationsList() {
 
   useEffect(() => {
     socket.on("receive_message", (message) => {
-      setConversations((prev) => {
+      setConversations((prevConversations) => {
         const otherUserId =
           message.senderId._id === currentUser._id
             ? message.receiverId._id
             : message.senderId._id;
-        if (prev[otherUserId]) {
+        if (prevConversations[otherUserId]) {
           return {
-            ...prev,
+            ...prevConversations,
             [otherUserId]: {
-              ...prev[otherUserId],
-              messages: [...prev[otherUserId].messages, message],
+              ...prevConversations[otherUserId],
+              messages: [...prevConversations[otherUserId].messages, message],
               userInfo:
                 message.senderId._id !== currentUser._id
                   ? message.senderId
@@ -132,7 +151,7 @@ function ConversationsList() {
           };
         } else {
           return {
-            ...prev,
+            ...prevConversations,
             [otherUserId]: {
               messages: [message],
               userInfo:
@@ -144,11 +163,10 @@ function ConversationsList() {
         }
       });
     });
-
     return () => {
       socket.off("receive_message");
     };
-  }, [currentUser._id, dispatch]);
+  }, [currentUser._id]);
 
   return (
     <div className="p-4 md:p-6 lg:p-8 w-full pt-16">
@@ -156,6 +174,34 @@ function ConversationsList() {
         Conversations
       </h2>
       <div className="max-h-[600px] overflow-y-auto p-2 border rounded">
+        {Object.keys(conversations).length === 0 &&
+          users.map((user) => (
+            <Link
+              to={`/dashboard?tab=audio-message&receiver=${user._id}`}
+              className="w-full"
+              key={user._id}
+            >
+              <div className="flex items-center gap-3 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 p-3 rounded-md">
+                <img
+                  src={user?.profilePicture}
+                  alt={user?.username || "user"}
+                  className="w-12 h-12 object-cover rounded-full bg-gray-300"
+                />
+                <div className="flex-grow">
+                  <h3 className="font-bold">{user?.username} </h3>
+                </div>
+                {onlineUsers && onlineUsers.includes(user._id) && (
+                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                )}
+                {!onlineUsers.includes(user._id) &&
+                  lastSeenRef.current[user._id] && (
+                    <p className="text-gray-600 text-sm dark:text-gray-400">
+                      last seen {formatTime(lastSeenRef.current[user._id])}{" "}
+                    </p>
+                  )}
+              </div>
+            </Link>
+          ))}
         {Object.keys(conversations).length > 0 &&
           Object.keys(conversations).map((userId) => {
             const conversation = conversations[userId];
@@ -191,7 +237,6 @@ function ConversationsList() {
                       {lastMessageContent}
                     </p>
                   </div>
-
                   {onlineUsers && onlineUsers.includes(userId) && (
                     <div className="w-3 h-3 rounded-full bg-green-500"></div>
                   )}

@@ -160,29 +160,46 @@ function AudioMessage() {
 
   useEffect(() => {
     dispatch(fetchAudioMessages());
-  }, [dispatch, location]);
+  }, [dispatch, location, selectedReceiver]);
 
   useEffect(() => {
     dispatch(fetchHistory());
   }, [dispatch]);
-
   useEffect(() => {
-    socket.on("receive_message", (message) => {
-      dispatch(updateMessageState(message));
-    });
+    if (currentUser) {
+      socket.on("receive_message", (message) => {
+        if (
+          message.senderId._id === currentUser._id ||
+          message.receiverId._id === currentUser._id
+        ) {
+          dispatch(updateMessageState(message));
+        }
+      });
 
-    socket.on("message_delivered", (message) => {
-      dispatch(updateMessageState(message));
-    });
-    socket.on("message_read", (message) => {
-      dispatch(updateMessageState(message));
-    });
-    return () => {
-      socket.off("receive_message");
-      socket.off("message_delivered");
-      socket.off("message_read");
-    };
-  }, [dispatch]);
+      socket.on("message_delivered", (message) => {
+        if (
+          message.senderId._id === currentUser._id ||
+          message.receiverId._id === currentUser._id
+        ) {
+          dispatch(updateMessageState(message));
+        }
+      });
+
+      socket.on("message_read", (message) => {
+        if (
+          message.senderId._id === currentUser._id ||
+          message.receiverId._id === currentUser._id
+        ) {
+          dispatch(updateMessageState(message));
+        }
+      });
+      return () => {
+        socket.off("receive_message");
+        socket.off("message_delivered");
+        socket.off("message_read");
+      };
+    }
+  }, [dispatch, currentUser, selectedReceiver]);
   const handleStartRecording = async () => {
     setIsRecording(true);
     try {
@@ -352,6 +369,7 @@ function AudioMessage() {
               </div>
             )}
           </div>
+
           {recordedAudio && (
             <audio
               controls
@@ -364,7 +382,7 @@ function AudioMessage() {
               placeholder="Type your message or record a voice note..."
               value={messageText}
               onTextChange={setMessageText}
-              style={{ height: "30px", borderRadius: "1.25rem" }}
+              style={{ height: "20px", borderRadius: "1.25rem" }}
             />
           </div>
           {!isRecording && (
