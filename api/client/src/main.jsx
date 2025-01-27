@@ -18,5 +18,3 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   </PersistGate>
 )
 
-
-// we use provider becuse the store shuold availble  around of our app
