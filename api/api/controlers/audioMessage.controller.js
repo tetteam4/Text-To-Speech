@@ -1,34 +1,46 @@
 import AudioMessage from "../models/audioMessage.model.js";
 import AudioHistory from "../models/audio.model.js";
 import { errorHandler } from "../utils/error.js";
-import { io } from "../index.js"; // Import io object
+import { io, userSocketMap } from "../index.js"; // Import io object
 
 export const createAudioMessage = async (req, res, next) => {
   const { receiverId, audioHistoryId, message } = req.body;
 
-  if (!receiverId || !audioHistoryId) {
+  if (!receiverId) {
     return next(errorHandler(400, "All fields are required "));
   }
 
   try {
-    const audioHistory = await AudioHistory.findById(audioHistoryId);
+    if (!audioHistoryId && !message) {
+      return next(
+        errorHandler(400, "Please select a audio or type a message to send")
+      );
+    }
+    const audioHistory = audioHistoryId
+      ? await AudioHistory.findById(audioHistoryId)
+      : null;
 
-    if (!audioHistory) return next(errorHandler(404, "Not found Audio"));
+    if (audioHistoryId && !audioHistory)
+      return next(errorHandler(404, "Not found Audio"));
+
     const newAudioMessage = new AudioMessage({
       senderId: req.user.id,
       receiverId,
-      audioHistoryId: audioHistoryId,
+      audioHistoryId: audioHistoryId ? audioHistoryId : null,
       message,
     });
     await newAudioMessage.save();
 
-    // Populate the sender details for real time broadcasting
     const messageWithSender = await AudioMessage.findById(newAudioMessage._id)
       .populate("senderId", "username profilePicture")
       .populate("audioHistoryId");
-
-    io.emit("receive_message", messageWithSender); // Emit real time message
-    res.status(201).json({ message: "Audio message sent successfully" });
+    const receiverSocketId = userSocketMap.get(receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("new_notification", {
+        senderId: req.user.id,
+      });
+    }
+    res.status(201).json(messageWithSender);
   } catch (error) {
     next(error);
   }
@@ -83,8 +95,11 @@ export const markMessageAsRead = async (req, res, next) => {
       { status: "read", isSeen: true },
       { new: true }
     );
+    const senderSocketId = userSocketMap.get(updatedMessage.senderId);
+    if (senderSocketId) {
+      io.to(senderSocketId).emit("read_notification", updatedMessage);
+    }
 
-    io.emit("message_read", updatedMessage); // Emit message read update
     res
       .status(200)
       .json({ message: " message read successfully", updatedMessage });

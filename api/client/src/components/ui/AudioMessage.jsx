@@ -1,20 +1,21 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-fetchAudioMessages,
-createAudioMessage,
-markMessageAsRead,
-clearMessages,
-deliveredMessage,
-updateMessageState,
+  fetchAudioMessages,
+  createAudioMessage,
+  markMessageAsRead,
+  clearMessages,
+  deliveredMessage,
+  updateMessageState,
 } from "../../redux/user/audioMessageSlice";
 import { fetchHistory } from "../../redux/user/historySlice";
 import Button from "./Button";
 import { toast } from "react-toastify";
-import { FaPlay, FaPause } from "react-icons/fa";
-import socket from "../../socket"; // Import the socket
+import { FaPlay, FaPause, FaPaperclip } from "react-icons/fa";
+import socket from "../../socket";
 import ConversationsList from "../ui/ConversationsList";
 import { useLocation } from "react-router-dom";
+import InputText from "./InputText";
 
 function AudioMessage() {
   const dispatch = useDispatch();
@@ -24,12 +25,17 @@ function AudioMessage() {
   const { currentUser } = useSelector((state) => state.user);
   const { history } = useSelector((state) => state.history);
   const [selectedReceiver, setSelectedReceiver] = useState("");
-  const [selectedAudioHistoryId, setSelectedAudioHistoryId] = useState(null);
+  const [selectedAudioHistoryId, setSelectedAudioHistoryId] = useState(""); // Changed initial value to ""
   const [messageText, setMessageText] = useState("");
   const [playingAudioId, setPlayingAudioId] = useState(null);
   const audioRefs = useRef({});
   const [users, setUsers] = useState([]);
   const location = useLocation();
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedAudio, setRecordedAudio] = useState(null);
+  const audioRecorder = useRef(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -48,24 +54,60 @@ function AudioMessage() {
     };
     fetchUsers();
   }, [currentUser._id]);
+  useEffect(() => {
+    const urlPrams = new URLSearchParams(location.search);
+    const receiverFromUrl = urlPrams.get("receiver");
+    if (receiverFromUrl) {
+      const user = users.find((user) => user._id === receiverFromUrl);
+      setSelectedReceiver(receiverFromUrl);
+      setSelectedUser(user);
+    } else {
+      setSelectedUser(null);
+      setSelectedReceiver("");
+    }
+  }, [location, users]);
 
   const handleSendMessage = async () => {
-    if (!selectedAudioHistoryId)
-      return toast.error("Please select audio to send");
+    if (!selectedAudioHistoryId && !messageText && !recordedAudio)
+      return toast.error("Please record audio or type a message");
     if (!selectedReceiver)
       return toast.error("Please select a user to send the message");
-
+    let audioHistoryId = selectedAudioHistoryId || null;
+    let messageData = {
+      receiverId: selectedReceiver,
+      audioHistoryId: audioHistoryId,
+      message: messageText,
+    };
+    if (!audioHistoryId && recordedAudio) {
+      try {
+        const formData = new FormData();
+        formData.append("audio", recordedAudio, "voice-note.mp3");
+        const res = await fetch("/api/audio/upload", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: formData,
+        });
+        const data = await res.json();
+        if (res.ok) {
+          messageData.audioHistoryId = data.historyId;
+        } else {
+          toast.error("Error uploading the audio");
+          return;
+        }
+      } catch (error) {
+        console.log(error);
+        toast.error(error.message);
+      }
+    }
     try {
-      await dispatch(
-        createAudioMessage({
-          receiverId: selectedReceiver,
-          audioHistoryId: selectedAudioHistoryId,
-          message: messageText,
-        })
-      ).unwrap();
+      const message = await dispatch(createAudioMessage(messageData)).unwrap();
+      dispatch(updateMessageState(message));
 
-      setSelectedAudioHistoryId(null);
+      setSelectedAudioHistoryId(""); // reset select input
       setMessageText("");
+      setRecordedAudio(null);
       toast.success("Message sent successfully");
     } catch (error) {
       toast.error(error.message);
@@ -89,20 +131,26 @@ function AudioMessage() {
   const handleEnded = (audioId) => {
     setPlayingAudioId(null);
   };
-  const markAsRead = async (messageId) => {
-    try {
-      await dispatch(markMessageAsRead(messageId)).unwrap();
-    } catch (error) {
-      console.log(error.message);
-    }
-  };
-  const markAsDelivered = async (messageId) => {
-    try {
-      await dispatch(deliveredMessage(messageId)).unwrap();
-    } catch (error) {
-      console.log(error.message);
-    }
-  };
+  const markAsRead = useCallback(
+    async (messageId) => {
+      try {
+        await dispatch(markMessageAsRead(messageId)).unwrap();
+      } catch (error) {
+        console.log(error.message);
+      }
+    },
+    [dispatch]
+  );
+  const markAsDelivered = useCallback(
+    async (messageId) => {
+      try {
+        await dispatch(deliveredMessage(messageId)).unwrap();
+      } catch (error) {
+        console.log(error.message);
+      }
+    },
+    [dispatch]
+  );
 
   useEffect(() => {
     dispatch(fetchAudioMessages());
@@ -129,173 +177,198 @@ function AudioMessage() {
       socket.off("message_read");
     };
   }, [dispatch]);
-  useEffect(() => {
-    const urlPrams = new URLSearchParams(location.search);
-    const receiverFromUrl = urlPrams.get("receiver");
-    if (receiverFromUrl) {
-      setSelectedReceiver(receiverFromUrl);
+  const handleStartRecording = async () => {
+    setIsRecording(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioRecorder.current = new MediaRecorder(stream);
+      audioRecorder.current.start();
+      const audioChunks = [];
+      audioRecorder.current.addEventListener("dataavailable", (event) => {
+        audioChunks.push(event.data);
+      });
+      audioRecorder.current.addEventListener("stop", async () => {
+        const audioBlob = new Blob(audioChunks, { type: "audio/mpeg" });
+
+        setRecordedAudio(audioBlob);
+      });
+    } catch (error) {
+      console.log(error);
+      toast.error("Error Accessing the microphone");
+      setIsRecording(false);
     }
-  }, [location]);
+  };
+  const handleStopRecording = () => {
+    setIsRecording(false);
+    if (audioRecorder.current) {
+      audioRecorder.current.stop();
+      audioRecorder.current.dispatchEvent(new Event("stop"));
+      audioRecorder.current = null;
+    }
+  };
+
   return (
     <div className="p-4 md:p-6 lg:p-8 w-full pt-16 flex flex-col md:flex-row gap-2">
       <div className="w-full md:w-1/4">
         <ConversationsList />
       </div>
+      <div className="flex-grow flex flex-col  border rounded p-2 relative dark:bg-gray-900 dark:border-gray-700">
+        {selectedUser && (
+          <div className="p-3 flex gap-2 border-b border-gray-300 dark:border-gray-700">
+            <img
+              src={selectedUser?.profilePicture}
+              alt={selectedUser?.username}
+              className="w-10 h-10 object-cover rounded-full bg-gray-300"
+            />
+            <div>
+              <h3 className="font-bold text-gray-700 dark:text-gray-300">
+                {selectedUser?.username}
+              </h3>
+              {/*<p className="text-gray-500 text-sm truncate">Last seen  </p>*/}
+            </div>
+          </div>
+        )}
 
-      <div className="flex-grow">
-        <h2 className="text-2xl font-semibold text-gray-800 dark:text-white mb-6">
-          Audio Message
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-4">
-          Note: Audio files are only retained for 72 hours.
-        </p>
-
-        <div className="mb-4">
-          <label
-            htmlFor="receiver"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Send to
-          </label>
-          <select
-            id="receiver"
-            className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:text-white"
-            value={selectedReceiver}
-            onChange={(e) => setSelectedReceiver(e.target.value)}
-          >
-            <option value="">Select a User</option>
-            {users &&
-              users.map((user) => (
-                <option value={user._id} key={user._id}>
-                  {user.username}
-                </option>
-              ))}
-          </select>
-        </div>
-        <div className="mb-4">
-          <label
-            htmlFor="audioHistoryId"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Select from your Audio History
-          </label>
-          <select
-            id="audioHistoryId"
-            className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:text-white"
-            value={selectedAudioHistoryId}
-            onChange={(e) => setSelectedAudioHistoryId(e.target.value)}
-          >
-            <option value="">Select from your history</option>
-            {history &&
-              history.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.originalText.length > 30
-                    ? `${item.originalText.slice(0, 30)}...`
-                    : item.originalText}
-                </option>
-              ))}
-          </select>
-        </div>
-        <div className="mb-4">
-          <label
-            htmlFor="textMessage"
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            Message (Optional)
-          </label>
-          <textarea
-            id="textMessage"
-            className="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:text-white"
-            value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
-          />
-        </div>
-        <Button
-          onClick={handleSendMessage}
-          disabled={!selectedReceiver || !selectedAudioHistoryId}
-        >
-          Send Message
-        </Button>
-
-        {loading && <p className="dark:text-gray-300">Loading messages...</p>}
-        {error && <p className="dark:text-red-300">Error loading messages</p>}
-        {messages.length === 0 && !loading && <p>No messages yet.</p>}
-        <div className="mt-6">
-          <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2">
-            Messages
-          </h3>
+        <div className="flex-grow overflow-y-auto h-[500px] scrollbar scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600">
           {messages &&
             messages.map((message) => (
               <div
                 key={message._id}
-                className="mb-4 p-3 border rounded shadow-sm bg-gray-100 dark:bg-gray-700 dark:border-gray-600"
+                className={`mb-4 p-3  rounded shadow-sm max-w-[80%]  ${
+                  message.senderId._id === currentUser._id
+                    ? "bg-primary/10 dark:bg-gray-700 ml-auto  "
+                    : "bg-gray-100 dark:bg-gray-800 mr-auto"
+                }`}
               >
-                <div className="flex justify-between items-center border-b border-gray-200 dark:border-gray-600 pb-2 mb-2">
-                  <p className="text-gray-800 dark:text-white font-bold">
-                    {message.senderId._id === currentUser._id
-                      ? `Me`
-                      : message.senderId.username}
-                  </p>
-                  <p className="text-gray-600 dark:text-gray-300 text-sm ">
-                    {new Date(message.createdAt).toLocaleString()}
-                  </p>
-                </div>
-                {message.message && (
-                  <p className="mb-2 text-gray-700 dark:text-gray-200">
-                    {message.message}
-                  </p>
-                )}
+                <div className="flex flex-col">
+                  <div className="flex justify-between items-center  pb-1 mb-1">
+                    <p className="font-bold text-sm text-gray-700 dark:text-white ">
+                      {message.senderId._id === currentUser._id
+                        ? `Me`
+                        : message.senderId.username}
+                    </p>
+                    <p className="text-gray-500 dark:text-gray-300 text-sm ">
+                      {new Date(message.createdAt).toLocaleString()}
+                    </p>
+                  </div>
+                  {message.message && (
+                    <p className="mb-1 text-gray-700 dark:text-gray-200 break-words">
+                      {message.message}
+                    </p>
+                  )}
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="small"
-                    onClick={() =>
-                      handlePlayAudio(
-                        message._id,
-                        message.audioHistoryId.audioFileUrl
-                      )
-                    }
-                  >
-                    {playingAudioId === message._id ? <FaPause /> : <FaPlay />}
-                  </Button>
-                  <audio
-                    src={message.audioHistoryId.audioFileUrl}
-                    ref={(ref) => {
-                      if (ref) {
-                        audioRefs.current[message._id] = ref;
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="small"
+                      onClick={() =>
+                        handlePlayAudio(
+                          message._id,
+                          message.audioHistoryId?.audioFileUrl
+                        )
                       }
-                    }}
-                    onEnded={() => handleEnded(message._id)}
-                    style={{ display: "none" }}
-                  />
-                  {message.status !== "read" &&
-                    message.senderId._id !== currentUser._id && (
-                      <Button
-                        size="small"
-                        variant="primary"
-                        onClick={() => {
-                          markAsDelivered(message._id);
-                          markAsRead(message._id);
+                    >
+                      {playingAudioId === message._id ? (
+                        <FaPause />
+                      ) : (
+                        <FaPlay />
+                      )}
+                    </Button>
+                    {message.audioHistoryId && (
+                      <audio
+                        src={message.audioHistoryId?.audioFileUrl}
+                        ref={(ref) => {
+                          if (ref) {
+                            audioRefs.current[message._id] = ref;
+                          }
                         }}
-                      >
-                        Mark as Read
-                      </Button>
+                        onEnded={() => handleEnded(message._id)}
+                        style={{ display: "none" }}
+                      />
+                    )}
+                    {message.status !== "read" &&
+                      message.senderId._id !== currentUser._id && (
+                        <Button
+                          size="small"
+                          variant="primary"
+                          onClick={() => {
+                            markAsDelivered(message._id);
+                            markAsRead(message._id);
+                          }}
+                        >
+                          Mark as Read
+                        </Button>
+                      )}
+                  </div>
+                  {message.status === "delivered" &&
+                    message.senderId._id !== currentUser._id && (
+                      <p className="text-gray-500 dark:text-gray-300 text-xs ">
+                        delivered
+                      </p>
+                    )}
+                  {message.status === "read" &&
+                    message.senderId._id !== currentUser._id && (
+                      <p className="text-gray-500 dark:text-gray-300 text-xs ">
+                        read
+                      </p>
                     )}
                 </div>
-                {message.status === "delivered" &&
-                  message.senderId._id !== currentUser._id && (
-                    <p className="text-gray-600 dark:text-gray-300 text-sm ">
-                      delivered
-                    </p>
-                  )}
-                {message.status === "read" &&
-                  message.senderId._id !== currentUser._id && (
-                    <p className="text-gray-600 dark:text-gray-300 text-sm ">
-                      read
-                    </p>
-                  )}
               </div>
             ))}
+        </div>
+        <div className="border-t border-gray-300 dark:border-gray-600 p-2 pt-4 flex gap-2">
+          {recordedAudio && (
+            <audio
+              controls
+              src={URL.createObjectURL(recordedAudio)}
+              className="w-1/5"
+            />
+          )}
+          <div className="flex flex-col gap-2 w-3/5">
+            <InputText
+              placeholder="type your message"
+              value={messageText}
+              onTextChange={setMessageText}
+            />
+            <select
+              id="audioHistoryId"
+              className=" py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:text-white"
+              value={selectedAudioHistoryId}
+              onChange={(e) => setSelectedAudioHistoryId(e.target.value)}
+            >
+              <option value="">Select from your history</option>
+              {history &&
+                history.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.originalText.length > 30
+                      ? `${item.originalText.slice(0, 30)}...`
+                      : item.originalText}
+                  </option>
+                ))}
+            </select>
+          </div>
+          <div className="flex gap-1">
+            {!isRecording && (
+              <Button onClick={handleStartRecording} size="small">
+                Record
+              </Button>
+            )}
+            {isRecording && (
+              <Button onClick={handleStopRecording} size="small">
+                Stop
+              </Button>
+            )}
+
+            <Button
+              onClick={handleSendMessage}
+              disabled={
+                !selectedReceiver ||
+                (!selectedAudioHistoryId && !messageText && !recordedAudio)
+              }
+              size="small"
+            >
+              Send
+            </Button>
+          </div>
         </div>
       </div>
     </div>

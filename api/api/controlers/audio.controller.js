@@ -1,5 +1,8 @@
 import AudioHistory from "../models/audio.model.js";
 import { errorHandler } from "../utils/error.js";
+import path from 'path';
+import fs from 'fs/promises';
+
 
 export const saveAudioHistory = async (req, res, next) => {
   const { text, audioUrl, voiceSettings } = req.body;
@@ -72,4 +75,32 @@ export const deleteAudioHistory = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+const __dirname = path.resolve();
+
+export const uploadAudio = async (req, res, next) => {
+    const { file } = req;
+    if (!file) {
+        return next(errorHandler(400, "Please upload an audio file"));
+    }
+    try {
+      const uploadDir = path.join(__dirname, 'uploads');
+      await fs.mkdir(uploadDir, { recursive: true });
+      const fileName = `${Date.now()}-${file.originalname}`
+      const filePath= path.join(uploadDir, fileName);
+      await fs.writeFile(filePath, file.buffer);
+
+       const newHistory = new AudioHistory({
+          userId: req.user.id,
+          originalText:"voice note",
+          audioFileUrl: `/uploads/${fileName}`
+        })
+
+       await newHistory.save();
+           res.status(200).json({ message: "audio is uploaded successfully",historyId:newHistory._id });
+
+    } catch (error) {
+      console.log(error);
+      next(error);
+    }
 };

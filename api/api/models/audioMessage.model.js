@@ -1,4 +1,3 @@
-// backend/models/audioMessage.model.js
 import mongoose from "mongoose";
 
 const audioMessageSchema = new mongoose.Schema(
@@ -16,7 +15,6 @@ const audioMessageSchema = new mongoose.Schema(
     audioHistoryId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "AudioHistory",
-      required: true,
     },
     message: {
       type: String,

@@ -33,8 +33,8 @@ function AudioPlayer({ audioUrl }) {
   }, [isPlaying]);
 
   useEffect(() => {
-    const audio = audioRef.current;
-    if (audio) {
+        const audio = audioRef.current;
+    if (audio && audioUrl) {
       const handleLoadedMetadata = () => {
         setDuration(audio.duration);
       };
