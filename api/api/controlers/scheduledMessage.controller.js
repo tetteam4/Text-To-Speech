@@ -2,6 +2,17 @@ import ScheduledMessage from "../models/scheduledMessage.model.js";
 import { errorHandler } from "../utils/error.js";
 import cron from "node-cron";
 
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const twilioNumber = process.env.TWILIO_PHONE_NUMBER;
+//const client = require('twilio')(accountSid,authToken);
+let client;
+
+(async () => {
+  const twilio = await import("twilio");
+  client = twilio.default(accountSid, authToken);
+})();
+
 export const createScheduledMessage = async (req, res, next) => {
   const {
     audioHistoryId,
@@ -26,7 +37,7 @@ export const createScheduledMessage = async (req, res, next) => {
     });
     await newScheduledMessage.save();
 
-    scheduleWhatsAppMessage(newScheduledMessage); // Schedule the message
+    scheduleWhatsAppMessage(newScheduledMessage, req.user); // Schedule the message
 
     res.status(201).json({
       message: "Scheduled message created successfully",
@@ -83,7 +94,7 @@ export const deleteScheduledMessage = async (req, res, next) => {
   }
 };
 
-const scheduleWhatsAppMessage = (scheduledMessage) => {
+const scheduleWhatsAppMessage = (scheduledMessage, user) => {
   const {
     scheduledDate,
     scheduledTime,
@@ -96,8 +107,12 @@ const scheduleWhatsAppMessage = (scheduledMessage) => {
   scheduled.setHours(parseInt(hours));
   scheduled.setMinutes(parseInt(minutes));
 
+  const cronDate = `${minutes} ${hours} ${scheduled.getDate()} ${
+    scheduled.getMonth() + 1
+  } *`;
+  console.log(cronDate);
   // Schedule the cron job
-  const job = cron.schedule(scheduled, async () => {
+  const job = cron.schedule(cronDate, async () => {
     try {
       // Update status to processing
       await ScheduledMessage.findByIdAndUpdate(
@@ -107,12 +122,15 @@ const scheduleWhatsAppMessage = (scheduledMessage) => {
       );
 
       // 1. Fetch audio
-      const audio = await fetch(`/api/audio/history/${audioHistoryId}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+      const audio = await fetch(
+        `http://localhost:3000/api/audio/history/${audioHistoryId}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        }
+      );
       const audioData = await audio.json();
       console.log(audioData);
       // 2. Send WhatsApp message and call user
@@ -162,19 +180,13 @@ const sendWhatsAppMessage = async (
     // For instance, you would use a Twilio method call here.
     // You must install the twilio package using `npm i twilio`
     // Here's just a placeholder. You'll need to configure the Twilio client
-    /*
-         const accountSid = "ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-        const authToken = "your_auth_token";
-         const client = require('twilio')(accountSid,authToken);
-        const message= await client.messages.create({
-             from:"whatsapp:+1xxxxxxxx",
-             to:`whatsapp:${whatsappNumber}`,
-             body:"New audio message",
-             mediaUrl:[audioUrl]
-        })
-       console.log("whatsapp message sent", message.sid)
-         await ScheduledMessage.findByIdAndUpdate(scheduledMessageId, { status: 'sent' }, { new: true });
-         */
+    const message = await client.messages.create({
+      from: `whatsapp:${twilioNumber}`,
+      to: `whatsapp:${whatsappNumber}`,
+      body: "New audio message",
+      mediaUrl: [audioUrl],
+    });
+    console.log("whatsapp message sent", message.sid);
     await ScheduledMessage.findByIdAndUpdate(
       scheduledMessageId,
       { status: "sent" },
@@ -191,28 +203,13 @@ const sendWhatsAppMessage = async (
 };
 const makePhoneCall = async (callNumber, audioUrl, scheduledMessageId) => {
   console.log(`Making a phone call to ${callNumber} with audio: ${audioUrl}`);
-  // Implement the integration with a Voice Calling API
-  //(Twilio, etc.)
-  // This is a placeholder. Replace this code with an actual API call.
   try {
-    // For instance, you would use a Twilio method call here.
-    // You must install the twilio package using `npm i twilio`
-    // Here's just a placeholder. You'll need to configure the Twilio client
-    
-        const accountSid = process.env.TWILIO_ACCOUNT_SI;
-        const authToken = process.env.TWILIO_AUTH_TOKEN;
-        const formNumber = process.env.TWILIO_PHONE_NUMBER;
-        const client = require('twilio')(accountSid,authToken);
-        const call = await client.calls.create({
-            to:callNumber,
-            from:formNumber,
-            url:audioUrl,
-
-        });
-        console.log(`Call SID: ${call.sid}`);
-        await ScheduledMessage.findByIdAndUpdate(scheduledMessageId, { status: 'calling' }, { new: true });
-
-        
+    const call = await client.calls.create({
+      to: callNumber,
+      from: twilioNumber,
+      url: "https://twimlets.com/holdmusic.mp3",
+    });
+    console.log(`Call SID: ${call.sid}`);
     await ScheduledMessage.findByIdAndUpdate(
       scheduledMessageId,
       { status: "calling" },

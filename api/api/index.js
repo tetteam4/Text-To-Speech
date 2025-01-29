@@ -5,6 +5,7 @@ import userRoutes from "./routes/user.route.js";
 import authRoutes from "./routes/auth.route.js";
 import audioRoutes from "./routes/audio.route.js";
 import audioMessageRoutes from "./routes/audioMessage.route.js";
+import scheduledMessageRoutes from "./routes/scheduledMessage.route.js";
 import cookieParser from "cookie-parser";
 import path from "path";
 import cors from "cors";
@@ -54,6 +55,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/audio", audioRoutes);
 app.use("/api/audioMessage", audioMessageRoutes);
+app.use("/api/scheduledMessage", scheduledMessageRoutes);
 
 app.use(express.static(path.join(__dirname, "/client/dist")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
