@@ -22,15 +22,19 @@ function InputText({ initialText = "", onTextChange, maxLength = 20000 }) {
     }
   };
 
+ 
+
   const handleClearText = () => {
     setText("");
     onTextChange("");
   };
 
+
   useEffect(() => {
     setText(initialText);
   }, [initialText]);
 
+  
   return (
     <div className="relative">
       <textarea
