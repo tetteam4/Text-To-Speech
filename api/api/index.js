@@ -79,6 +79,7 @@ io.on("connection", (socket) => {
     userSocketMap.set(userId, socket.id);
     console.log("a user connected", socket.id, userId);
   });
+
   // Handle disconnect
   socket.on("disconnect", () => {
     for (const [userId, socketId] of userSocketMap.entries()) {
@@ -90,7 +91,6 @@ io.on("connection", (socket) => {
     console.log("user disconnected", socket.id);
   });
 
-  // Handle incoming messages
   socket.on("send_message", (message) => {
     console.log(message);
     io.emit("receive_message", message);

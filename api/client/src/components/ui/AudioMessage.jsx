@@ -22,7 +22,7 @@ import socket from "../../socket";
 import ConversationsList from "../ui/ConversationsList";
 import { useLocation } from "react-router-dom";
 import InputText from "./InputText";
-import Dropdown from "./Dropdown";
+import Modal from "./Modal";
 
 function AudioMessage() {
   const dispatch = useDispatch();
@@ -42,7 +42,7 @@ function AudioMessage() {
   const [recordedAudio, setRecordedAudio] = useState(null);
   const audioRecorder = useRef(null);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [showHistoryDropdown, setShowHistoryDropdown] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -62,6 +62,7 @@ function AudioMessage() {
     };
     fetchUsers();
   }, [currentUser._id]);
+
   useEffect(() => {
     const urlPrams = new URLSearchParams(location.search);
     const receiverFromUrl = urlPrams.get("receiver");
@@ -74,11 +75,13 @@ function AudioMessage() {
       setSelectedReceiver("");
     }
   }, [location, users]);
+
   const handleSendMessage = async () => {
     if (!selectedAudioHistoryId && !messageText && !recordedAudio)
       return toast.error("Please record audio or type a message");
     if (!selectedReceiver)
       return toast.error("Please select a user to send the message");
+
     let audioHistoryId = selectedAudioHistoryId;
     let messageData = {
       receiverId: selectedReceiver,
@@ -166,40 +169,38 @@ function AudioMessage() {
     dispatch(fetchHistory());
   }, [dispatch]);
   useEffect(() => {
-    if (currentUser) {
-      socket.on("receive_message", (message) => {
-        if (
-          message.senderId._id === currentUser._id ||
-          message.receiverId._id === currentUser._id
-        ) {
-          dispatch(updateMessageState(message));
-        }
-      });
+    socket.on("receive_message", (message) => {
+      if (
+        message.senderId._id === currentUser._id ||
+        message.receiverId._id === currentUser._id
+      ) {
+        dispatch(updateMessageState(message));
+      }
+    });
 
-      socket.on("message_delivered", (message) => {
-        if (
-          message.senderId._id === currentUser._id ||
-          message.receiverId._id === currentUser._id
-        ) {
-          dispatch(updateMessageState(message));
-        }
-      });
+    socket.on("message_delivered", (message) => {
+      if (
+        message.senderId._id === currentUser._id ||
+        message.receiverId._id === currentUser._id
+      ) {
+        dispatch(updateMessageState(message));
+      }
+    });
+    socket.on("message_read", (message) => {
+      if (
+        message.senderId._id === currentUser._id ||
+        message.receiverId._id === currentUser._id
+      ) {
+        dispatch(updateMessageState(message));
+      }
+    });
+    return () => {
+      socket.off("receive_message");
+      socket.off("message_delivered");
+      socket.off("message_read");
+    };
+  }, [dispatch, currentUser]);
 
-      socket.on("message_read", (message) => {
-        if (
-          message.senderId._id === currentUser._id ||
-          message.receiverId._id === currentUser._id
-        ) {
-          dispatch(updateMessageState(message));
-        }
-      });
-      return () => {
-        socket.off("receive_message");
-        socket.off("message_delivered");
-        socket.off("message_read");
-      };
-    }
-  }, [dispatch, currentUser, selectedReceiver]);
   const handleStartRecording = async () => {
     setIsRecording(true);
     try {
@@ -229,12 +230,12 @@ function AudioMessage() {
       audioRecorder.current = null;
     }
   };
-  const toggleHistoryDropdown = () => {
-    setShowHistoryDropdown(!showHistoryDropdown);
+  const toggleHistoryModal = () => {
+    setShowHistoryModal(!showHistoryModal);
   };
   const handleHistorySelect = (selected) => {
     setSelectedAudioHistoryId(selected.id);
-    setShowHistoryDropdown(false);
+    setShowHistoryModal(false);
   };
   return (
     <div className="p-4 md:p-6 lg:p-8 w-full pt-16 flex flex-col md:flex-row gap-2">
@@ -258,6 +259,7 @@ function AudioMessage() {
             </div>
           </div>
         )}
+
         <div className="flex-grow overflow-y-auto h-[500px] scrollbar scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600">
           {messages &&
             messages.map((message) => (
@@ -344,30 +346,16 @@ function AudioMessage() {
               </div>
             ))}
         </div>
+
         <div className="border-t border-gray-300 dark:border-gray-600 p-2 pt-4 flex  items-center gap-2">
           <div className="relative">
             <Button
-              onClick={toggleHistoryDropdown}
+              onClick={toggleHistoryModal}
               size="small"
               className="rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
             >
               <FaPaperclip className="h-5 w-5" />
             </Button>
-            {showHistoryDropdown && (
-              <div className="absolute left-0 mt-2 w-48 bg-white border rounded shadow-md z-20 dark:bg-gray-700 dark:border-gray-600">
-                {history.map((item) => (
-                  <button
-                    key={item.id}
-                    className="block w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-white"
-                    onClick={() => handleHistorySelect(item)}
-                  >
-                    {item.originalText.length > 30
-                      ? `${item.originalText.slice(0, 30)}...`
-                      : item.originalText}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {recordedAudio && (
@@ -377,6 +365,7 @@ function AudioMessage() {
               className="w-1/5"
             />
           )}
+
           <div className="flex-grow">
             <InputText
               placeholder="Type your message or record a voice note..."
@@ -385,6 +374,7 @@ function AudioMessage() {
               style={{ height: "20px", borderRadius: "1.25rem" }}
             />
           </div>
+
           {!isRecording && (
             <Button
               onClick={handleStartRecording}
@@ -403,6 +393,7 @@ function AudioMessage() {
               Stop
             </Button>
           )}
+
           {!isRecording && (
             <Button
               onClick={handleSendMessage}
@@ -413,6 +404,28 @@ function AudioMessage() {
             </Button>
           )}
         </div>
+
+        {showHistoryModal && (
+          <Modal
+            isOpen={showHistoryModal}
+            onClose={toggleHistoryModal}
+            title="Audio History"
+          >
+            <div className="max-h-[300px] overflow-y-auto">
+              {history.map((item) => (
+                <button
+                  key={item.id}
+                  className="block w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-white"
+                  onClick={() => handleHistorySelect(item)}
+                >
+                  {item.originalText.length > 30
+                    ? `${item.originalText.slice(0, 30)}...`
+                    : item.originalText}
+                </button>
+              ))}
+            </div>
+          </Modal>
+        )}
       </div>
     </div>
   );
