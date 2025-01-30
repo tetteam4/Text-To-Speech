@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchHistory } from "../redux/user/historySlice";
 import { toast } from "react-toastify";
-import { Button, Label, TextInput, Select } from "flowbite-react";
+import { Button, Label, TextInput, Select, Spinner } from "flowbite-react";
 import axios from "axios";
+
 function ScheduledMessage() {
   const dispatch = useDispatch();
-  const { history } = useSelector((state) => state.history);
-  const [scheduledMessages, setScheduledMessages] = useState([]);
+  const { history, loading: historyLoading } = useSelector(
+    (state) => state.history
+  );
+  const [scheduledMessages, setScheduledMessages] = useState(null);
   const [audioHistoryId, setAudioHistoryId] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [callNumber, setCallNumber] = useState("");
@@ -15,9 +18,11 @@ function ScheduledMessage() {
   const [scheduledDate, setScheduledDate] = useState("");
   const [loading, setLoading] = useState(false);
   const { currentUser } = useSelector((state) => state.user);
+  const [loadingScheduled, setLoadingScheduled] = useState(false);
 
   useEffect(() => {
     const fetchScheduledMessages = async () => {
+      setLoadingScheduled(true);
       try {
         const response = await axios.get("/api/scheduledMessage/get", {
           withCredentials: true,
@@ -28,16 +33,33 @@ function ScheduledMessage() {
         if (response.status === 200) {
           setScheduledMessages(response.data);
         } else {
-          console.log("failed to fetch messages");
+          console.error("failed to fetch scheduled messages");
+          toast.error("Failed to load scheduled messages");
         }
       } catch (error) {
-        console.log(error);
+        console.error("Error loading scheduled messages:", error);
+        toast.error("Error loading scheduled messages");
+      } finally {
+        setLoadingScheduled(false);
       }
     };
 
     fetchScheduledMessages();
   }, []);
+
+  const updateAudio = useCallback(() => {
+    if (history && history.length > 0) {
+      setAudioHistoryId(history[0].id);
+      
+    }
+  }, [history]);
+
+  useEffect(() => {
+    updateAudio();
+  }, [updateAudio]);
+
   const handleCreateScheduledMessage = async (e) => {
+    console.log("handleCreateScheduledMessage function was called");
     e.preventDefault();
     setLoading(true);
     if (
@@ -49,6 +71,12 @@ function ScheduledMessage() {
       setLoading(false);
       return toast.error("All fields are required!");
     }
+    console.log("Audio ID:", audioHistoryId);
+    console.log("whatsApp number:", whatsappNumber);
+    console.log("schedule time:", scheduledTime);
+    console.log("schedule date:", scheduledDate);
+    console.log("call number:", callNumber);
+
     try {
       const res = await axios.post(
         "/api/scheduledMessage/create",
@@ -67,8 +95,13 @@ function ScheduledMessage() {
         }
       );
       if (res.status === 201) {
-        setLoading(false);
-        setScheduledMessages((prev) => [...prev, res.data.scheduledMessage]);
+        setScheduledMessages((prev) => {
+          const newScheduledMessages = [
+            ...(prev || []),
+            res.data.scheduledMessage,
+          ];
+          return newScheduledMessages;
+        });
         toast.success("Scheduled successfully");
         setAudioHistoryId("");
         setWhatsappNumber("");
@@ -76,14 +109,15 @@ function ScheduledMessage() {
         setScheduledDate("");
         setCallNumber("");
       } else {
-        setLoading(false);
         toast.error("Scheduled failed");
       }
     } catch (error) {
-      setLoading(false);
       toast.error("Scheduled failed");
+    } finally {
+      setLoading(false);
     }
   };
+
   useEffect(() => {
     dispatch(fetchHistory());
   }, [dispatch]);
@@ -106,6 +140,7 @@ function ScheduledMessage() {
             id="audioHistoryId"
             value={audioHistoryId}
             onChange={(e) => setAudioHistoryId(e.target.value)}
+            disabled={historyLoading || history?.length === 0}
             required
           >
             <option value="">Select an audio</option>
@@ -160,13 +195,22 @@ function ScheduledMessage() {
             required
           />
         </div>
-        <Button disabled={loading}>
-          {loading ? "Loading..." : "Schedule Message"}
+        <Button type={"submit"} disabled={loading}>
+          {loading ? (
+            <>
+              <Spinner size="sm" />
+              <span>Scheduling...</span>
+            </>
+          ) : (
+            "Schedule Message"
+          )}
         </Button>
       </form>
       <div>
         <h3>Scheduled Messages</h3>
-        {scheduledMessages.length === 0 ? (
+        {loadingScheduled ? (
+          <p>Loading scheduled messages...</p>
+        ) : scheduledMessages === null ? (
           <p>You don't have any scheduled message</p>
         ) : (
           <ul className="overflow-y-scroll max-h-96 ">

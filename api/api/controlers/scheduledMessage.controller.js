@@ -2,15 +2,14 @@ import ScheduledMessage from "../models/scheduledMessage.model.js";
 import { errorHandler } from "../utils/error.js";
 import cron from "node-cron";
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const twilioNumber = process.env.TWILIO_PHONE_NUMBER;
-//const client = require('twilio')(accountSid,authToken);
 let client;
 
 (async () => {
   const twilio = await import("twilio");
-  client = twilio.default(accountSid, authToken);
+  client = twilio.default(
+    process.env.TWILIO_ACCOUNT_SID,
+    process.env.TWILIO_AUTH_TOKEN
+  );
 })();
 
 export const createScheduledMessage = async (req, res, next) => {
@@ -95,13 +94,8 @@ export const deleteScheduledMessage = async (req, res, next) => {
 };
 
 const scheduleWhatsAppMessage = (scheduledMessage, user) => {
-  const {
-    scheduledDate,
-    scheduledTime,
-    audioHistoryId,
-    whatsappNumber,
-    callNumber,
-  } = scheduledMessage;
+  const { scheduledDate, scheduledTime, audioHistoryId, callNumber } =
+    scheduledMessage;
   const [hours, minutes] = scheduledTime.split(":");
   const scheduled = new Date(scheduledDate);
   scheduled.setHours(parseInt(hours));
@@ -122,6 +116,7 @@ const scheduleWhatsAppMessage = (scheduledMessage, user) => {
       );
 
       // 1. Fetch audio
+      console.log("audioHistoryId:", audioHistoryId);
       const audio = await fetch(
         `http://localhost:3000/api/audio/history/${audioHistoryId}`,
         {
@@ -131,18 +126,24 @@ const scheduleWhatsAppMessage = (scheduledMessage, user) => {
           },
         }
       );
+      console.log("audio response:", audio);
+      if (!audio.ok) {
+        console.error("Failed to fetch audio:", audio.status, audio.statusText);
+        await ScheduledMessage.findByIdAndUpdate(
+          scheduledMessage._id,
+          { status: "failed" },
+          { new: true }
+        );
+        job.stop();
+        return;
+      }
       const audioData = await audio.json();
-      console.log(audioData);
-      // 2. Send WhatsApp message and call user
-      await sendWhatsAppMessage(
-        whatsappNumber,
-        audioData.audioFileUrl,
-        scheduledMessage._id
-      );
+      console.log("audioData: ", audioData);
+      // 2. Call user
       if (callNumber)
         await makePhoneCall(
           callNumber,
-          audioData.audioFileUrl,
+          audioData?.audioFileUrl,
           scheduledMessage._id
         );
       // 3. Update the status to sent or completed
@@ -165,49 +166,13 @@ const scheduleWhatsAppMessage = (scheduledMessage, user) => {
   });
 };
 
-const sendWhatsAppMessage = async (
-  whatsappNumber,
-  audioUrl,
-  scheduledMessageId
-) => {
-  console.log(
-    `Sending WhatsApp message to ${whatsappNumber} with audio: ${audioUrl}`
-  );
-  // Implement the integration with a WhatsApp Business API.
-  // (Twilio, etc.)
-  // This is a placeholder. Replace this code with an actual API call.
-  try {
-    // For instance, you would use a Twilio method call here.
-    // You must install the twilio package using `npm i twilio`
-    // Here's just a placeholder. You'll need to configure the Twilio client
-    const message = await client.messages.create({
-      from: `whatsapp:${twilioNumber}`,
-      to: `whatsapp:${whatsappNumber}`,
-      body: "New audio message",
-      mediaUrl: [audioUrl],
-    });
-    console.log("whatsapp message sent", message.sid);
-    await ScheduledMessage.findByIdAndUpdate(
-      scheduledMessageId,
-      { status: "sent" },
-      { new: true }
-    );
-  } catch (error) {
-    console.error("Error in WhatsApp Sending:", error);
-    await ScheduledMessage.findByIdAndUpdate(
-      scheduledMessageId,
-      { status: "failed" },
-      { new: true }
-    );
-  }
-};
 const makePhoneCall = async (callNumber, audioUrl, scheduledMessageId) => {
   console.log(`Making a phone call to ${callNumber} with audio: ${audioUrl}`);
   try {
     const call = await client.calls.create({
       to: callNumber,
-      from: twilioNumber,
-      url: "https://twimlets.com/holdmusic.mp3",
+      from: "+18482798914",
+      url: audioUrl,
     });
     console.log(`Call SID: ${call.sid}`);
     await ScheduledMessage.findByIdAndUpdate(

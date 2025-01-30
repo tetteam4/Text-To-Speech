@@ -104,3 +104,19 @@ export const uploadAudio = async (req, res, next) => {
       next(error);
     }
 };
+// Added for scheduled message fetch
+export const getAudioHistoryById = async (req, res, next) => {
+    try {
+        console.log("Trying to find audio history with ID:", req.params.audioHistoryId);
+        const audioHistory = await AudioHistory.findById(
+            req.params.audioHistoryId
+        );
+        if (!audioHistory)
+            return next(errorHandler(404, "Audio history not found!"));
+        console.log("Audio History Found", audioHistory)
+        res.status(200).json(audioHistory);
+      } catch (error) {
+        console.log("Error finding audio history: ", error)
+        next(error);
+      }
+};
