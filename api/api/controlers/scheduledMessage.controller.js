@@ -2,6 +2,7 @@ import ScheduledMessage from "../models/scheduledMessage.model.js";
 import { errorHandler } from "../utils/error.js";
 import cron from "node-cron";
 import dotenv from 'dotenv'; // Import dotenv
+import axios from "axios";
 dotenv.config(); // Load environment variables
 
 
@@ -168,9 +169,9 @@ const scheduleWhatsAppMessage = (scheduledMessage, user) => {
     }
   });
 };
-const fromNumber = process.env.TWILIO_PHONE_NUMBER;
-  console.log(fromNumber);
   
+     const fromNumber = process.env.TWILIO_PHONE_NUMBER;
+ 
 const makePhoneCall = async (callNumber, audioUrl, scheduledMessageId) => {
   console.log(`Making a phone call to ${callNumber} with audio: ${audioUrl}`);
   try {
@@ -195,4 +196,55 @@ const makePhoneCall = async (callNumber, audioUrl, scheduledMessageId) => {
   }
 };
 
-//for now its worked correclty 
+// for now its worked correclty 
+  //  const makePhoneCall = async (callNumber, audioUrl, scheduledMessageId) => {
+  //    const fromNumber = process.env.TWILIO_PHONE_NUMBER;
+
+  //    if (!fromNumber) {
+  //      console.error("Error : Twilio from number is missing ");
+  //      return await ScheduledMessage.findByIdAndUpdate(
+  //        scheduledMessageId,
+  //        { status: "failed" },
+  //        { new: true }
+  //      );
+  //    }
+  //    console.log(
+  //      `Making a phone call to ${callNumber} with audio: ${audioUrl}`
+  //    );
+  //    try {
+  //      const twimlRes = await axios.get(
+  //        `http://localhost:3000/twiml?audioUrl=${audioUrl}` // <== Correct call to `/api/twiml`
+  //      );
+  //      if (twimlRes.status !== 200) {
+  //        console.error(
+  //          "Error fetching twiML:",
+  //          twimlRes.status,
+  //          twimlRes.statusText
+  //        );
+  //        return await ScheduledMessage.findByIdAndUpdate(
+  //          scheduledMessageId,
+  //          { status: "failed" },
+  //          { new: true }
+  //        );
+  //      }
+
+  //      const call = await client.calls.create({
+  //        to: callNumber,
+  //        from: fromNumber,
+  //        url: `http://localhost:3000/twiml?audioUrl=${audioUrl}`, // Send TwiML Endpoint
+  //      });
+  //      console.log(`Call SID: ${call.sid}`);
+  //      await ScheduledMessage.findByIdAndUpdate(
+  //        scheduledMessageId,
+  //        { status: "calling" },
+  //        { new: true }
+  //      );
+  //    } catch (error) {
+  //      console.error("Error making phone call:", error);
+  //      await ScheduledMessage.findByIdAndUpdate(
+  //        scheduledMessageId,
+  //        { status: "failed" },
+  //        { new: true }
+  //      );
+  //    }
+  //  };
