@@ -50,7 +50,6 @@ function ScheduledMessage() {
   const updateAudio = useCallback(() => {
     if (history && history.length > 0) {
       setAudioHistoryId(history[0].id);
-      
     }
   }, [history]);
 

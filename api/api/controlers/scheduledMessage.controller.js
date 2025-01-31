@@ -1,6 +1,9 @@
 import ScheduledMessage from "../models/scheduledMessage.model.js";
 import { errorHandler } from "../utils/error.js";
 import cron from "node-cron";
+import dotenv from 'dotenv'; // Import dotenv
+dotenv.config(); // Load environment variables
+
 
 let client;
 
@@ -165,13 +168,15 @@ const scheduleWhatsAppMessage = (scheduledMessage, user) => {
     }
   });
 };
-
+const fromNumber = process.env.TWILIO_PHONE_NUMBER;
+  console.log(fromNumber);
+  
 const makePhoneCall = async (callNumber, audioUrl, scheduledMessageId) => {
   console.log(`Making a phone call to ${callNumber} with audio: ${audioUrl}`);
   try {
     const call = await client.calls.create({
       to: callNumber,
-      from: "+18482798914",
+      from:fromNumber,
       url: audioUrl,
     });
     console.log(`Call SID: ${call.sid}`);
