@@ -290,7 +290,7 @@ function DashSidebar({ toggleSidebar, isSidebarOpen }) {
                   <HiAnnotation className="h-6 w-6 text-gray-700 dark:text-gray-300" />
                   {isSidebarOpen && (
                     <span className="text-gray-700 dark:text-gray-300">
-                      Audio Message
+                      Your Messages
                     </span>
                   )}
                 </span>

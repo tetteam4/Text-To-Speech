@@ -4,9 +4,13 @@ import { toast } from "react-toastify";
 import { Button, Spinner, Modal, Table } from "flowbite-react";
 import axios from "axios";
 import { HiOutlineExclamationCircle } from "react-icons/hi";
+import { FaAngleLeft, FaAngleRight, FaEllipsisH } from "react-icons/fa";
 
 function ScheduledMessageDashboard() {
-  const [scheduledMessages, setScheduledMessages] = useState(null);
+  const [scheduledMessages, setScheduledMessages] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [messagesPerPage] = useState(5);
+  const [totalPages, setTotalPages] = useState(1);
   const [loadingScheduled, setLoadingScheduled] = useState(false);
   const [openModal, setOpenModal] = useState(null);
   const [messageToDelete, setMessageToDelete] = useState(null);
@@ -15,28 +19,46 @@ function ScheduledMessageDashboard() {
     const fetchScheduledMessages = async () => {
       setLoadingScheduled(true);
       try {
-        const response = await axios.get("/api/scheduledMessage/get", {
-          withCredentials: true,
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-        if (response.status === 200) {
-          setScheduledMessages(response.data);
+        const res = await axios.get(
+          `/api/scheduledMessage/get?page=${currentPage}&limit=${messagesPerPage}`,
+          {
+            withCredentials: true,
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        if (res.status === 200) {
+          if (
+            res.data &&
+            res.data.messages &&
+            Array.isArray(res.data.messages)
+          ) {
+            setScheduledMessages(res.data.messages);
+          } else {
+            setScheduledMessages([]);
+          }
+          setTotalPages(
+            Math.ceil((res?.data?.totalMessages || 0) / messagesPerPage)
+          );
         } else {
           console.error("failed to fetch scheduled messages");
           toast.error("Failed to load scheduled messages");
+          setScheduledMessages([]);
+          setTotalPages(1);
         }
       } catch (error) {
         console.error("Error loading scheduled messages:", error);
         toast.error("Error loading scheduled messages");
+        setScheduledMessages([]);
+        setTotalPages(1);
       } finally {
         setLoadingScheduled(false);
       }
     };
 
     fetchScheduledMessages();
-  }, []);
+  }, [currentPage, messagesPerPage]);
 
   const handleDeleteMessage = async () => {
     setLoadingScheduled(true);
@@ -57,6 +79,7 @@ function ScheduledMessageDashboard() {
         toast.success("Scheduled message deleted successfully");
         setOpenModal(null);
         setMessageToDelete(null);
+        setCurrentPage(1);
       } else {
         toast.error("Failed to delete scheduled message");
         setOpenModal(null);
@@ -73,6 +96,72 @@ function ScheduledMessageDashboard() {
     setMessageToDelete(message);
     setOpenModal("delete");
   };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const renderPageNumbers = () => {
+    const pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      if (totalPages <= 5 || (i >= currentPage - 2 && i <= currentPage + 2)) {
+        pages.push(
+          <Button
+            key={i}
+            color={currentPage === i ? "gray" : "light"}
+            size="xs"
+            onClick={() => setCurrentPage(i)}
+          >
+            {i}
+          </Button>
+        );
+      } else if (
+        i === 1 ||
+        i === totalPages ||
+        (i === currentPage - 3 && currentPage > 4) ||
+        (i === currentPage + 3 && currentPage < totalPages - 3)
+      ) {
+        pages.push(
+          <Button
+            key={i}
+            color="light"
+            size="xs"
+            onClick={() => setCurrentPage(i)}
+          >
+            {i}
+          </Button>
+        );
+        if (i === 1 && currentPage > 4) {
+          pages.push(
+            <span key="ellipsis-start">
+              <FaEllipsisH />
+            </span>
+          );
+        } else if (i === totalPages && currentPage < totalPages - 3) {
+          pages.push(
+            <span key="ellipsis-end">
+              <FaEllipsisH />
+            </span>
+          );
+        }
+      }
+    }
+    return pages;
+  };
+  const indexOfLastMessage = currentPage * messagesPerPage;
+  const indexOfFirstMessage = indexOfLastMessage - messagesPerPage;
+  const currentMessages = scheduledMessages.slice(
+    indexOfFirstMessage,
+    indexOfLastMessage
+  );
 
   return (
     <div className="p-4 md:p-6 lg:p-8 w-full pt-16">
@@ -99,41 +188,65 @@ function ScheduledMessageDashboard() {
               <Table.HeadCell>Call Number</Table.HeadCell>
               <Table.HeadCell>Date into</Table.HeadCell>
             </Table.Head>
-            {scheduledMessages.map((message) => (
-              <Table.Body key={message._id} className="divide-y">
-                <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800 hover:bg-slate-200">
-                  <Table.Cell>
-                    <span
-                      onClick={() => {
-                        openDeleteModal(message);
-                      }}
-                      className="font-semibold text-red-600 hover:underline cursor-pointer "
-                    >
-                      delete
-                    </span>
-                  </Table.Cell>
-                  <Table.Cell>
-                    {message.audioHistoryId.originalText.length > 30
-                      ? `${message.audioHistoryId.originalText.slice(0, 30)}...`
-                      : message.audioHistoryId.originalText}
-                  </Table.Cell>
-                  <Table.Cell>{message.status}</Table.Cell>
-                  <Table.Cell>
-                    {new Date(message.scheduledDate).toLocaleDateString()}
-                  </Table.Cell>
-                  <Table.Cell>{message.scheduledTime}</Table.Cell>
-                  <Table.Cell>{message.whatsappNumber}</Table.Cell>
-                  <Table.Cell>
-                    {message.callNumber ? message.callNumber : "Not Set"}
-                  </Table.Cell>
-                  <Table.Cell>
-                    {new Date(message.createdAt).toLocaleString()}
-                  </Table.Cell>
-                </Table.Row>
-              </Table.Body>
-            ))}
+            {currentMessages &&
+              currentMessages.map((message) => (
+                <Table.Body key={message._id} className="divide-y">
+                  <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800 hover:bg-slate-200">
+                    <Table.Cell>
+                      <span
+                        onClick={() => {
+                          openDeleteModal(message);
+                        }}
+                        className="font-semibold text-red-600 hover:underline cursor-pointer "
+                      >
+                        delete
+                      </span>
+                    </Table.Cell>
+                    <Table.Cell>
+                      {message.audioHistoryId.originalText.length > 30
+                        ? `${message.audioHistoryId.originalText.slice(
+                            0,
+                            30
+                          )}...`
+                        : message.audioHistoryId.originalText}
+                    </Table.Cell>
+                    <Table.Cell>{message.status}</Table.Cell>
+                    <Table.Cell>
+                      {new Date(message.scheduledDate).toLocaleDateString()}
+                    </Table.Cell>
+                    <Table.Cell>{message.scheduledTime}</Table.Cell>
+                    <Table.Cell>{message.whatsappNumber}</Table.Cell>
+                    <Table.Cell>
+                      {message.callNumber ? message.callNumber : "Not Set"}
+                    </Table.Cell>
+                    <Table.Cell>
+                      {new Date(message.createdAt).toLocaleString()}
+                    </Table.Cell>
+                  </Table.Row>
+                </Table.Body>
+              ))}
           </Table>
         )}
+        <div className="flex justify-center items-center gap-2 py-4">
+          <Button
+            disabled={currentPage === 1}
+            onClick={handlePreviousPage}
+            size="sm"
+          >
+            <FaAngleLeft />
+          </Button>
+          {renderPageNumbers()}
+          <Button
+            disabled={
+              currentPage === totalPages ||
+              scheduledMessages?.length < messagesPerPage
+            }
+            onClick={handleNextPage}
+            size="sm"
+          >
+            <FaAngleRight />
+          </Button>
+        </div>
 
         <Modal
           show={openModal === "delete"}

@@ -17,7 +17,7 @@ function ScheduledMessage() {
   const { history, loading: historyLoading } = useSelector(
     (state) => state.history
   );
-  const [scheduledMessages, setScheduledMessages] = useState(null);
+  const [scheduledMessages, setScheduledMessages] = useState([]); // Initialize as an array
   const [audioHistoryId, setAudioHistoryId] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
   const [callNumber, setCallNumber] = useState("");
@@ -44,10 +44,12 @@ function ScheduledMessage() {
         } else {
           console.error("failed to fetch scheduled messages");
           toast.error("Failed to load scheduled messages");
+          setScheduledMessages([]);
         }
       } catch (error) {
         console.error("Error loading scheduled messages:", error);
         toast.error("Error loading scheduled messages");
+        setScheduledMessages([]);
       } finally {
         setLoadingScheduled(false);
       }
@@ -262,56 +264,59 @@ function ScheduledMessage() {
           <h3>Scheduled Messages</h3>
           {loadingScheduled ? (
             <p>Loading scheduled messages...</p>
-          ) : scheduledMessages === null ? (
-            <p>You don't have any scheduled message</p>
-          ) : (
+          ) : scheduledMessages &&
+            Array.isArray(scheduledMessages) &&
+            scheduledMessages.length > 0 ? (
             <ul className="overflow-y-scroll max-h-96 ">
-              {scheduledMessages.map((message) => (
-                <li
-                  key={message._id}
-                  className="p-4 border rounded shadow mb-2 bg-gray-100 dark:bg-gray-700 relative"
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="text-gray-800 dark:text-white font-semibold">
-                      {message.audioHistoryId.originalText.length > 30
-                        ? `${message.audioHistoryId.originalText.slice(
-                            0,
-                            30
-                          )}...`
-                        : message.audioHistoryId.originalText}
+              {scheduledMessages &&
+                scheduledMessages.map((message) => (
+                  <li
+                    key={message._id}
+                    className="p-4 border rounded shadow mb-2 bg-gray-100 dark:bg-gray-700 relative"
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-gray-800 dark:text-white font-semibold">
+                        {message.audioHistoryId.originalText.length > 30
+                          ? `${message.audioHistoryId.originalText.slice(
+                              0,
+                              30
+                            )}...`
+                          : message.audioHistoryId.originalText}
+                      </p>
+                      <p className="text-gray-600 dark:text-gray-400 text-sm ">
+                        {new Date(message.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm ">
+                      Status : {message.status}
                     </p>
                     <p className="text-gray-600 dark:text-gray-400 text-sm ">
-                      {new Date(message.createdAt).toLocaleString()}
+                      Scheduled Date :{" "}
+                      {new Date(message.scheduledDate).toLocaleDateString()}
                     </p>
-                  </div>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm ">
-                    Status : {message.status}
-                  </p>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm ">
-                    Scheduled Date :{" "}
-                    {new Date(message.scheduledDate).toLocaleDateString()}
-                  </p>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm ">
-                    Scheduled Time : {message.scheduledTime}
-                  </p>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm ">
-                    WhatsApp Number : {message.whatsappNumber}
-                  </p>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm ">
-                    Call Number :{" "}
-                    {message.callNumber ? message.callNumber : "Not Set"}
-                  </p>
-                  <Button
-                    color="failure"
-                    onClick={() => openDeleteModal(message)}
-                    size="xs"
-                    className="absolute top-2 right-2"
-                  >
-                    Delete
-                  </Button>
-                </li>
-              ))}
+                    <p className="text-gray-600 dark:text-gray-400 text-sm ">
+                      Scheduled Time : {message.scheduledTime}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm ">
+                      WhatsApp Number : {message.whatsappNumber}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm ">
+                      Call Number :{" "}
+                      {message.callNumber ? message.callNumber : "Not Set"}
+                    </p>
+                    <Button
+                      color="failure"
+                      onClick={() => openDeleteModal(message)}
+                      size="xs"
+                      className="absolute top-2 right-2"
+                    >
+                      Delete
+                    </Button>
+                  </li>
+                ))}
             </ul>
+          ) : (
+            <p>You don't have any scheduled message</p>
           )}
         </div>
         <Modal
