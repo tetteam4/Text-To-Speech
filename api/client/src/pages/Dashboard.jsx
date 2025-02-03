@@ -9,6 +9,7 @@ import FileToSpeech from "./FileToSpeech";
 import DashboardComp from "../components/DashboardComp";
 import AudioMessage from "../components/ui/AudioMessage";
 import ScheduledMessage from "../components/ScheduledMessage";
+import ScheduledMessageDashboard from "../components/ScheduledMessageDashboard";
 
 export default function Dashboard() {
     const location = useLocation();
@@ -55,6 +56,8 @@ export default function Dashboard() {
           {tab === "audio-message" && <AudioMessage />}
           {tab === "dash" && <DashboardComp />}
           {tab === "scheduled-message" && <ScheduledMessage />}
+          {tab === "messages" && <ScheduledMessageDashboard />}
+
           {tab === "file-to-speech" && <FileToSpeech />}
         </div>
       </div>

@@ -1,10 +1,21 @@
 import ScheduledMessage from "../models/scheduledMessage.model.js";
 import { errorHandler } from "../utils/error.js";
 import cron from "node-cron";
+<<<<<<< HEAD
 import dotenv from 'dotenv'; // Import dotenv
 import axios from "axios";
 dotenv.config(); // Load environment variables
+=======
+import dotenv from "dotenv";
+import axios from "axios";
+import { fileURLToPath } from "url";
+import path from "path";
+>>>>>>> aukto
 
+dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 let client;
 
@@ -39,8 +50,7 @@ export const createScheduledMessage = async (req, res, next) => {
       callNumber,
     });
     await newScheduledMessage.save();
-
-    scheduleWhatsAppMessage(newScheduledMessage, req.user); // Schedule the message
+    scheduleWhatsAppMessage(newScheduledMessage, req.user);
 
     res.status(201).json({
       message: "Scheduled message created successfully",
@@ -52,11 +62,21 @@ export const createScheduledMessage = async (req, res, next) => {
 };
 
 export const getScheduledMessages = async (req, res, next) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 5;
+  const startIndex = (page - 1) * limit;
   try {
-    const scheduledMessages = await ScheduledMessage.find({
+    const totalMessages = await ScheduledMessage.countDocuments({
       userId: req.user.id,
-    }).populate("audioHistoryId");
-    res.status(200).json(scheduledMessages);
+    });
+    const messages = await ScheduledMessage.find({ userId: req.user.id })
+      .populate("audioHistoryId")
+      .skip(startIndex)
+      .limit(limit);
+    res.status(200).json({
+      messages,
+      totalMessages,
+    });
   } catch (error) {
     next(error);
   }
@@ -96,10 +116,37 @@ export const deleteScheduledMessage = async (req, res, next) => {
     next(error);
   }
 };
+const uploadMediaToTwilio = async (audioUrl) => {
+  try {
+    const response = await axios.get(audioUrl, { responseType: "arraybuffer" });
 
+    if (response.status !== 200) {
+      throw new Error(
+        `Failed to download audio file with status: ${response.status}`
+      );
+    }
+
+    const buffer = Buffer.from(response.data, "binary");
+
+    const upload = await client.media.create({
+      body: buffer,
+      contentType: "audio/mpeg",
+    });
+
+    return upload.mediaUrl;
+  } catch (error) {
+    console.error("Error during upload to twilio:", error);
+    throw new Error(`Failed to upload to MessageBird status: ${error.message}`);
+  }
+};
 const scheduleWhatsAppMessage = (scheduledMessage, user) => {
-  const { scheduledDate, scheduledTime, audioHistoryId, callNumber } =
-    scheduledMessage;
+  const {
+    scheduledDate,
+    scheduledTime,
+    audioHistoryId,
+    callNumber,
+    whatsappNumber,
+  } = scheduledMessage;
   const [hours, minutes] = scheduledTime.split(":");
   const scheduled = new Date(scheduledDate);
   scheduled.setHours(parseInt(hours));
@@ -144,12 +191,14 @@ const scheduleWhatsAppMessage = (scheduledMessage, user) => {
       const audioData = await audio.json();
       console.log("audioData: ", audioData);
       // 2. Call user
-      if (callNumber)
-        await makePhoneCall(
-          callNumber,
-          audioData?.audioFileUrl,
-          scheduledMessage._id
-        );
+      await makePhoneCall(
+        callNumber,
+        audioData?.audioFileUrl,
+        audioData?.originalText,
+        whatsappNumber,
+        scheduledMessage._id
+      );
+
       // 3. Update the status to sent or completed
       await ScheduledMessage.findByIdAndUpdate(
         scheduledMessage._id,
@@ -169,18 +218,71 @@ const scheduleWhatsAppMessage = (scheduledMessage, user) => {
     }
   });
 };
+<<<<<<< HEAD
   
      const fromNumber = process.env.TWILIO_PHONE_NUMBER;
  
 const makePhoneCall = async (callNumber, audioUrl, scheduledMessageId) => {
+=======
+
+const makePhoneCall = async (
+  callNumber,
+  audioUrl,
+  originalText,
+  whatsappNumber,
+  scheduledMessageId
+) => {
+  const fromNumber = process.env.TWILIO_PHONE_NUMBER;
+  const whatsAppFromNumber = process.env.TWILIO_WHATSAPP_NUMBER;
+  if (!fromNumber) {
+    console.error("Error : Twilio from number is missing ");
+    return await ScheduledMessage.findByIdAndUpdate(
+      scheduledMessageId,
+      { status: "failed" },
+      { new: true }
+    );
+  }
+  if (!whatsAppFromNumber) {
+    console.error("Error : Twilio whatsApp from number is missing ");
+    return await ScheduledMessage.findByIdAndUpdate(
+      scheduledMessageId,
+      { status: "failed" },
+      { new: true }
+    );
+  }
+>>>>>>> aukto
   console.log(`Making a phone call to ${callNumber} with audio: ${audioUrl}`);
   try {
+    const twimlRes = await axios.get(
+      `http://localhost:3000/api/twiml?audioUrl=${audioUrl}`
+    );
+
+    if (twimlRes.status !== 200) {
+      console.error(
+        "Error fetching twiML:",
+        twimlRes.status,
+        twimlRes.statusText
+      );
+      return await ScheduledMessage.findByIdAndUpdate(
+        scheduledMessageId,
+        { status: "failed" },
+        { new: true }
+      );
+    }
     const call = await client.calls.create({
       to: callNumber,
-      from:fromNumber,
-      url: audioUrl,
+      from: fromNumber,
+      url: `http://localhost:3000/api/twiml?audioUrl=${audioUrl}`,
     });
     console.log(`Call SID: ${call.sid}`);
+    const mediaUrl = await uploadMediaToTwilio(audioUrl);
+    const message = await client.messages.create({
+      body: originalText,
+      from: `whatsapp:${whatsAppFromNumber}`,
+      to: `whatsapp:${whatsappNumber}`,
+      mediaUrl: [mediaUrl],
+    });
+    console.log(`WhatsApp message SID: ${message.sid}`);
     await ScheduledMessage.findByIdAndUpdate(
       scheduledMessageId,
       { status: "calling" },
@@ -195,6 +297,7 @@ const makePhoneCall = async (callNumber, audioUrl, scheduledMessageId) => {
     );
   }
 };
+<<<<<<< HEAD
 
 // for now its worked correclty 
   //  const makePhoneCall = async (callNumber, audioUrl, scheduledMessageId) => {
@@ -248,3 +351,5 @@ const makePhoneCall = async (callNumber, audioUrl, scheduledMessageId) => {
   //      );
   //    }
   //  };
+=======
+>>>>>>> aukto

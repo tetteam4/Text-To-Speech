@@ -271,6 +271,32 @@ function DashSidebar({ toggleSidebar, isSidebarOpen }) {
               </div>
             </Link>
             <Link
+              to="/dashboard?tab=messages"
+              onClick={() => setCloseOnClick(true)}
+              className="relative"
+            >
+              <div
+                className={`
+                              flex items-center  rounded-md p-2
+                             hover:bg-gray-200 dark:hover:bg-gray-700
+                               ${
+                                 tab === "messages"
+                                   ? "bg-gray-200 dark:bg-gray-700"
+                                   : " "
+                               }
+                            `}
+              >
+                <span className="flex items-center gap-2 ">
+                  <HiAnnotation className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+                  {isSidebarOpen && (
+                    <span className="text-gray-700 dark:text-gray-300">
+                      Your Messages
+                    </span>
+                  )}
+                </span>
+              </div>
+            </Link>
+            <Link
               to="/dashboard?tab=scheduled-message"
               onClick={() => setCloseOnClick(true)}
               className="relative"
