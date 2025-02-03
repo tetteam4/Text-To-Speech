@@ -13,5 +13,4 @@ router.post("/create", verifyToken, createScheduledMessage);
 router.get("/get", verifyToken, getScheduledMessages);
 router.put("/update/:messageId", verifyToken, updateScheduledMessage);
 router.delete("/delete/:messageId", verifyToken, deleteScheduledMessage);
-
 export default router;
