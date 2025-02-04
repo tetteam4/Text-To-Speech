@@ -29,18 +29,8 @@ function ScheduledMessageDashboard() {
           }
         );
         if (res.status === 200) {
-          if (
-            res.data &&
-            res.data.messages &&
-            Array.isArray(res.data.messages)
-          ) {
-            setScheduledMessages(res.data.messages);
-          } else {
-            setScheduledMessages([]);
-          }
-          setTotalPages(
-            Math.ceil((res?.data?.totalMessages || 0) / messagesPerPage)
-          );
+          setScheduledMessages(res.data.messages);
+          setTotalPages(Math.ceil(res.data.totalMessages / messagesPerPage));
         } else {
           console.error("failed to fetch scheduled messages");
           toast.error("Failed to load scheduled messages");
@@ -156,12 +146,6 @@ function ScheduledMessageDashboard() {
     }
     return pages;
   };
-  const indexOfLastMessage = currentPage * messagesPerPage;
-  const indexOfFirstMessage = indexOfLastMessage - messagesPerPage;
-  const currentMessages = scheduledMessages.slice(
-    indexOfFirstMessage,
-    indexOfLastMessage
-  );
 
   return (
     <div className="p-4 md:p-6 lg:p-8 w-full pt-16">
@@ -174,7 +158,7 @@ function ScheduledMessageDashboard() {
       <div className=" flex-1 table-auto overflow-x-scroll md:mx-auto p-3 scrollbarscrollbar-track-slate-100 scrollbar-thumb-slate-300 dark:scrollbar-track-slate-700 dark:scrollbar-thumb-slate-500 ">
         {loadingScheduled ? (
           <p>Loading scheduled messages...</p>
-        ) : scheduledMessages === null || scheduledMessages.length === 0 ? (
+        ) : scheduledMessages && scheduledMessages.length === 0 ? (
           <p>You don't have any scheduled message</p>
         ) : (
           <Table hoverable className="shadow-lg ">
@@ -188,8 +172,8 @@ function ScheduledMessageDashboard() {
               <Table.HeadCell>Call Number</Table.HeadCell>
               <Table.HeadCell>Date into</Table.HeadCell>
             </Table.Head>
-            {currentMessages &&
-              currentMessages.map((message) => (
+            {scheduledMessages &&
+              scheduledMessages.map((message) => (
                 <Table.Body key={message._id} className="divide-y">
                   <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800 hover:bg-slate-200">
                     <Table.Cell>
@@ -203,12 +187,14 @@ function ScheduledMessageDashboard() {
                       </span>
                     </Table.Cell>
                     <Table.Cell>
-                      {message.audioHistoryId.originalText.length > 30
-                        ? `${message.audioHistoryId.originalText.slice(
-                            0,
-                            30
-                          )}...`
-                        : message.audioHistoryId.originalText}
+                      {message.audioHistoryId
+                        ? message.audioHistoryId.originalText.length > 30
+                          ? `${message.audioHistoryId.originalText.slice(
+                              0,
+                              30
+                            )}...`
+                          : message.audioHistoryId.originalText
+                        : "No Audio Text"}
                     </Table.Cell>
                     <Table.Cell>{message.status}</Table.Cell>
                     <Table.Cell>
@@ -238,8 +224,7 @@ function ScheduledMessageDashboard() {
           {renderPageNumbers()}
           <Button
             disabled={
-              currentPage === totalPages ||
-              scheduledMessages?.length < messagesPerPage
+              currentPage === totalPages || scheduledMessages?.length === 0
             }
             onClick={handleNextPage}
             size="sm"
@@ -250,16 +235,14 @@ function ScheduledMessageDashboard() {
 
         <Modal
           show={openModal === "delete"}
-          onClose={() => setOpenModal(null)}
-          popup
           size="md"
+          popup
+          onClose={() => setOpenModal(null)}
         >
           <Modal.Header />
           <Modal.Body>
             <div className="text-center">
-              <HiOutlineExclamationCircle className="h-14 w-14 text-gray-500 dark:text-gray-200 mb-4 mx-auto" />
               <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-                {" "}
                 Are you sure you want to delete this message?
               </h3>
               <div className="flex justify-center gap-4">

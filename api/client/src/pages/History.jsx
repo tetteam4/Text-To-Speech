@@ -261,7 +261,7 @@ function History() {
                         onClick={() => toggleShareDropdown(row.id)}
                         size="small"
                       >
-                        <FaShareAlt /> Share
+                        <FaShareAlt />
                       </Button>
                       {shareDropdownOpen[row.id] && (
                         <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-md z-10 dark:bg-gray-700 dark:border-gray-600">
