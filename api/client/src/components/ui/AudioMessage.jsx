@@ -367,11 +367,12 @@ function AudioMessage() {
           )}
 
           <div className="flex-grow">
-            <InputText
+            <input
               placeholder="Type your message or record a voice note..."
               value={messageText}
               onTextChange={setMessageText}
-              style={{ height: "20px", borderRadius: "1.25rem" }}
+              className="w-full rounded-md dark: bg-gray-700" 
+              // style={{ height: "20px", borderRadius: "1.25rem" }}
             />
           </div>
 
