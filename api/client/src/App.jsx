@@ -13,7 +13,7 @@ import OnlyAdminPrivateRoute from "./components/OnlyAdmin";
 import UserProfile from "./pages/Profile";
 import ScrollTop from "./components/ScrollTop";
 import NotFoundPage from "./pages/NotFoundPage";
-import Text from "./pages/Text";
+import Text from "./pages/testd";
 // import Search from "./pages/Search";
 
 export default function App() {
